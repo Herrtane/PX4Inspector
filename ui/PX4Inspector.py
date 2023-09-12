@@ -95,8 +95,8 @@ class WindowClass(QMainWindow, form_class) :
         except FileNotFoundError as e:
             QMessageBox.about(self, '기존 데이터 없음', '검사 대상 PX4 드론에서 데이터를 불러온 적이 없습니다. 데이터를 새로 추출합니다. 해당 작업은 몇 분 정도 소요될 수 있습니다.')
             self.getFileFromUAV()
-            parser_fd = os.open(self.dataman, os.O_BINARY)
-            self.parser = missionParser(parser_fd)
+            # parser_fd = os.open(self.dataman, os.O_BINARY)
+            # self.parser = missionParser(parser_fd)
             pass
         except AttributeError as a:
             print(a)            
