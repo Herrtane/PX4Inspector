@@ -1,3 +1,5 @@
+# TODO : 로그 파일 존재 유무 확인 기능
+
 import sys
 import os.path
 import getpass
@@ -11,7 +13,6 @@ from src.Mission.PyMavlinkCRC32 import crc
 from src.Mission.PX4MissionParser import missionParser
 from src.Mission.tools import SerialPort, command
 
-#TODO: mission, logger 파일 검증 함수 분리
 from src.PX4Mission import hash_sha1, hash_md5, createdTime, dataman_is_encrypted #mission
 from src.PX4Log import hash_sha1, hash_md5, createdTime, is_encrypted # logger
 from src.Logger.PX4LogParser import *
@@ -33,7 +34,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from haversine import inverse_haversine, Direction, Unit
 import pandas as pd
 from pandas import Series, DataFrame
-from ui.PX4ForensicParameter import Parameterclass
+from ui.PX4InspectorParameter import Parameterclass
 
 # Use if it have to set port manually
 # if you use linux os, check your serial port that connected with px4
