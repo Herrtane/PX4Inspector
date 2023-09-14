@@ -105,6 +105,8 @@ class WindowClass(QMainWindow, form_class) :
             self.parser = missionParser(parser_fd)
 
         self.dataRefreshButton.clicked.connect(self.getFileFromUAV)
+        self.ftp_listWidget.itemDoubleClicked.connect(self.ftp_doubleClicked)
+        self.ftp_start_pushButton.clicked.connect(self.ftp_startClicked)
 
         self.fig = plt.Figure(figsize=(1,1))
         self.canvas = FigureCanvas(self.fig)
@@ -114,6 +116,16 @@ class WindowClass(QMainWindow, form_class) :
         
         # self.tabWidget.setCurrentIndex(0)
         
+    def ftp_doubleClicked(self):
+        global selectedItemName
+        selectedItemName = self.ftp_listWidget.currentItem().text()
+        self.ftp_selected_textEdit.setText(selectedItemName)
+
+    def ftp_startClicked(self):
+        selectedItemNumber = selectedItemName.split('.')[0]
+        print(selectedItemNumber)
+
+
     def initUI(self):
         self.setWindowTitle('PX4Inspector')
         self.setWindowIcon(QIcon('drone.png'))

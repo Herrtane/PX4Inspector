@@ -1,2 +1,7 @@
 venv/
 .idea/
+bin/
+dev/
+etc/
+fs/
+proc/
