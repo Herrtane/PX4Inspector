@@ -1,5 +1,6 @@
 import os
 
+# git config --global core.autocrlf true
 
 # 특정 경로 내 존재하는 디렉토리 및 파일 리스트 검색
 
