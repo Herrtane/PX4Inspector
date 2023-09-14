@@ -1,5 +1,3 @@
-# TODO : 로그 파일 존재 유무 확인 기능
-
 import sys
 import os.path
 import getpass
@@ -16,6 +14,8 @@ from src.Mission.tools import SerialPort, command
 from src.PX4Mission import hash_sha1, hash_md5, createdTime, dataman_is_encrypted #mission
 from src.PX4Log import hash_sha1, hash_md5, createdTime, is_encrypted # logger
 from src.Logger.PX4LogParser import *
+
+from src.FTPInspectModule import *
 
 import csv
 from PyQt5.QtGui import QStandardItemModel
@@ -36,19 +36,19 @@ import pandas as pd
 from pandas import Series, DataFrame
 from ui.PX4InspectorParameter import Parameterclass
 
+
 # Use if it have to set port manually
 # if you use linux os, check your serial port that connected with px4
 # example: Serial = '/dev/ttyACM0'
 Serial = None
 
-def suppress_qt_warnings():   # 해상도별 글자크기 강제 고정하는 함수
+# 해상도별 글자크기 강제 고정하는 함수
+def suppress_qt_warnings():
     environ["QT_DEVICE_PIXEL_RATIO"] = "0"
     environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
     environ["QT_SCREEN_SCALE_FACTORS"] = "1"
     environ["QT_SCALE_FACTOR"] = "1"
 
-#UI파일 연결
-#단, UI파일은 Python 코드 파일과 같은 디렉토리에 위치해야한다.
 form_class = uic.loadUiType("ui/PX4Inspector.ui")[0]
 download_class = uic.loadUiType("ui/downloadProgress.ui")[0]
 
@@ -60,13 +60,11 @@ username = getpass.getuser()
 # if csvlist == []:
 #     shell_ulog_2_csv()
 
-#화면을 띄우는데 사용되는 Class 선언
 class WindowClass(QMainWindow, form_class) :
     def __init__(self) :
         super().__init__()
         self.setupUi(self)
 
-        # self.parameter_ui = Parameterclass(self.parameterList, self.parameterDescription, self.parameterValue, self.parameterRange, self.parameterInformation)
         self.progressbar = QProgressBar()
         self.statusbar.addPermanentWidget(self.progressbar)
         self.step = 0
@@ -81,8 +79,6 @@ class WindowClass(QMainWindow, form_class) :
 
         # 시작 시 자동 연결
         self.connectSerial(serial=Serial)
-        
-        # 로고
         self.initUI()
 
         self.dataman = "./fs/microsd/dataman"
@@ -105,25 +101,37 @@ class WindowClass(QMainWindow, form_class) :
             self.parser = missionParser(parser_fd)
 
         self.dataRefreshButton.clicked.connect(self.getFileFromUAV)
-        self.ftp_listWidget.itemDoubleClicked.connect(self.ftp_doubleClicked)
-        self.ftp_start_pushButton.clicked.connect(self.ftp_startClicked)
+        self.ftp_listWidget.itemDoubleClicked.connect(self.ftpDoubleClicked)
+        self.ftp_start_pushButton.clicked.connect(self.ftpStartClicked)
 
-        self.fig = plt.Figure(figsize=(1,1))
+        self.fig = plt.Figure(figsize=(1, 1))
         self.canvas = FigureCanvas(self.fig)
 
-        self.log_fig = plt.Figure(figsize=(1,1))
+        self.log_fig = plt.Figure(figsize=(1, 1))
         self.log_canvas = FigureCanvas(self.log_fig)
         
         # self.tabWidget.setCurrentIndex(0)
         
-    def ftp_doubleClicked(self):
-        global selectedItemName
-        selectedItemName = self.ftp_listWidget.currentItem().text()
-        self.ftp_selected_textEdit.setText(selectedItemName)
+    def ftpDoubleClicked(self):
+        global selected_item_name
+        selected_item_name = self.ftp_listWidget.currentItem().text()
+        self.ftp_selected_textEdit.setText(selected_item_name)
 
-    def ftp_startClicked(self):
-        selectedItemNumber = selectedItemName.split('.')[0]
-        print(selectedItemNumber)
+
+    def ftpStartClicked(self):
+        selected_item_number = selected_item_name.split('.')[0]
+        # FTPInspectModule 함수로 분기
+        ftp_result = ftpInspectBranch(selected_item_number)
+        items = self.ftp_result_tableWidget.findItems(selected_item_number, Qt.MatchExactly)
+        item = items[0]
+        if ftp_result is True:
+            temp_item = QTableWidgetItem()
+            temp_item.setText("O")
+            self.ftp_result_tableWidget.setItem(item.row(), 1, temp_item)
+        else :
+            temp_item = QTableWidgetItem()
+            temp_item.setText("X")
+            self.ftp_result_tableWidget.setItem(item.row(), 1, temp_item)
 
 
     def initUI(self):
@@ -152,8 +160,6 @@ class WindowClass(QMainWindow, form_class) :
                 self.mavPort = None
                 self.label_connected.setText(f"unconnected")
 
-        # self.login = self.loginCheck()
-        
         # 핵심 코드
         self.ftp = FTPReader(_port=self.mavPort)
 

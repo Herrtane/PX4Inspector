@@ -64,7 +64,7 @@ class MavlinkPort:
         if m is not None:
             if self._debug > 2:
                 print(m)
-            data = m.data[:m.log_count]
+            data = m.data[:m.count]
             self.serial_buf += ''.join(str(chr(x)) for x in data)
 
     def serial_read(self, n):

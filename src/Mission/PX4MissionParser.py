@@ -150,7 +150,7 @@ class missionParser:
 
             buf.timestamp = struct.unpack('Q', buffer[4:12])[0]
             buf.current_seq = struct.unpack('i', buffer[12:16])[0]
-            buf.log_count = struct.unpack('H', buffer[16:18])[0]
+            buf.count = struct.unpack('H', buffer[16:18])[0]
             buf.dataman_id = buffer[18]
 
         elif type(buf) == dataman_compat_s:
