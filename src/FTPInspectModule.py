@@ -10,8 +10,12 @@ from os import path
 # 2 : 점검자에 의한 추가 점검 요 (보류)
 
 def ftpInspectBranch(item_number):
-    if item_number == 'T10':
+    if item_number == 'T07':
+        result = cryptInspect()
+    elif item_number == 'T10':
         result = accessInspect()
+    elif item_number == 'T11':
+        result = backupInspect()
     elif item_number == 'T12':
         result = infoExposureInspect()
     elif item_number == 'T38':
@@ -24,6 +28,8 @@ def ftpInspectBranch(item_number):
 def ftpInspectSuccessResultMessage(item_number):
     if item_number == 'T10':
         result = '파일 및 디렉터리에 대한 접근 통제가 이루어지고 있는 것이 확인되었습니다.'
+    elif item_number == 'T11':
+        result = '중요 데이터가 백업되는 것이 확인되었습니다.'
     elif item_number == 'T12':
         result = '파일 및 디렉터리에 대한 불필요한 정보 노출이 없는 것이 확인되었습니다.'
     elif item_number == 'T38':
@@ -33,11 +39,22 @@ def ftpInspectSuccessResultMessage(item_number):
     return result
 
 def ftpInspectHoldResultMessage(item_number):
-    if item_number == 'T12':
-        result = 'PX4Inspector 작업 폴더 내 ./bin, ./dev, ./etc, ./fs, ./obj, ./proc 디렉토리 추출이 완료되었습니다. 해당 디렉토리 내 T12 항목에 대한 점검자의 추가 분석이 필요합니다.'
+    if item_number == 'T07':
+        result = 'PX4Inspector 작업 폴더 내 ./bin, ./dev, ./etc, ./fs, ./obj, ./proc 디렉토리 추출이 완료되었습니다. 해당 디렉토리 내 파일에 대한 주요 데이터 암호화 여부에 대한 점검자의 추가 분석이 필요합니다.'
+    elif item_number == 'T11':
+        result = './fs/microsd/parameters_backup.bson 파일이 발견되었습니다. 해당 파일 내 중요 데이터 백업에 대한 점검자의 추가 분석이 필요합니다.'
+    elif item_number == 'T12':
+        result = 'PX4Inspector 작업 폴더 내 ./bin, ./dev, ./etc, ./fs, ./obj, ./proc 디렉토리 추출이 완료되었습니다. 해당 디렉토리 내 불필요한 정보 노출에 대한 점검자의 추가 분석이 필요합니다.'
     else:
         result = '적절하지 않은 항목입니다.'
     return result
+
+def cryptInspect():
+    # 파일 접근 검사를 통해 파일이 추출되었다면 해당 파일을 점검자가 직접 추가 확인 해서 판단
+    if accessInspect() == 0:
+        return 2
+    else:
+        return 0
 
 def accessInspect():
     access_count = 0
@@ -71,6 +88,12 @@ def accessInspect():
         return 0
     else:
         return 1
+
+def backupInspect():
+    if path.exists('./fs/microsd/parameters_backup.bson'):
+        return 2
+    else:
+        return 0
 
 def infoExposureInspect():
     # 파일 접근 검사를 통해 파일이 추출되었다면 해당 파일을 점검자가 직접 추가 확인 해서 판단

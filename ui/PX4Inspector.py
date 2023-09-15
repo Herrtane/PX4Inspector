@@ -1,42 +1,24 @@
 # Todo : onChange 같은 코드 정리해도 된다고 판단했으면 정리하기
+# Todo : 중요파일 무결성 검증은 Write 관련 연구 필요
 
 import sys
 import os.path
-import getpass
-import glob
-import hashlib
-import platform
+
 from PyQt5.QtWidgets import *
 from src.mavlink_shell import get_serial_item
 from src.FTPReader import FTPReader
-from src.Mission.PyMavlinkCRC32 import crc
 from src.Mission.PX4MissionParser import missionParser
 from src.Mission.tools import SerialPort, command
-
-from src.PX4Mission import hash_sha1, hash_md5, createdTime, dataman_is_encrypted #mission
-from src.PX4Log import hash_sha1, hash_md5, createdTime, is_encrypted # logger
-from src.Logger.PX4LogParser import *
-
 from src.FTPInspectModule import *
 
-import csv
-from PyQt5.QtGui import QStandardItemModel
-from PyQt5.QtGui import QStandardItem
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QPixmap
-from PyQt5.QtCore import QVariant
 
 from PyQt5 import uic
 from os import environ
 import os
-from matplotlib import patches
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from haversine import inverse_haversine, Direction, Unit
-import pandas as pd
-from pandas import Series, DataFrame
-from ui.PX4InspectorParameter import Parameterclass
 
 
 # Use if it have to set port manually
@@ -54,14 +36,6 @@ def suppress_qt_warnings():
 form_class = uic.loadUiType("ui/PX4Inspector.ui")[0]
 download_class = uic.loadUiType("ui/downloadProgress.ui")[0]
 
-#CSV 파일 존재 유무 확인
-username = getpass.getuser()
-# dirpath = 'C:/Users/' + username + '/Desktop/PX4Forensic/fs/microsd/log/2022-07-18/'
-# fileExe = '*.csv'
-# csvlist = glob.glob(dirpath+fileExe)
-# if csvlist == []:
-#     shell_ulog_2_csv()
-
 class WindowClass(QMainWindow, form_class) :
     def __init__(self) :
         super().__init__()
@@ -71,7 +45,6 @@ class WindowClass(QMainWindow, form_class) :
         self.statusbar.addPermanentWidget(self.progressbar)
         self.step = 0
         self.modulePath = ""
-        # self.tabWidget.currentChanged.connect(self.onChange)
         self.clicked_log = ""
         self.parent_log = ""
         self.mavPort = None
@@ -88,14 +61,10 @@ class WindowClass(QMainWindow, form_class) :
         try:
             parser_fd = os.open(self.dataman, os.O_BINARY)
             self.parser = missionParser(parser_fd)
-            # 파일 정보 표시(mission)
-            # self.fileInfo(self.dataman, self.tableWidget_file)
             QMessageBox.about(self, '기존 데이터 발견', '이전 작업에서 불러왔던 데이터가 발견되었습니다. 해당 데이터를 로드합니다.')
         except FileNotFoundError as e:
             QMessageBox.about(self, '기존 데이터 없음', '검사 대상 PX4 드론에서 데이터를 불러온 적이 없습니다. 데이터를 새로 추출합니다. 해당 작업은 몇 분 정도 소요될 수 있습니다.')
             self.getFileFromUAV()
-            # parser_fd = os.open(self.dataman, os.O_BINARY)
-            # self.parser = missionParser(parser_fd)
             pass
         except AttributeError as a:
             print(a)            
@@ -111,9 +80,7 @@ class WindowClass(QMainWindow, form_class) :
 
         self.log_fig = plt.Figure(figsize=(1, 1))
         self.log_canvas = FigureCanvas(self.log_fig)
-        
-        # self.tabWidget.setCurrentIndex(0)
-        
+
     def ftpDoubleClicked(self):
         global selected_item_name
         selected_item_name = self.ftp_listWidget.currentItem().text()
@@ -265,9 +232,6 @@ class WindowClass(QMainWindow, form_class) :
             parser_fd = os.open(self.modulePath, os.O_BINARY)
             self.parser = missionParser(parser_fd)
 
-            # 파일 정보 표시(mission)
-            # self.fileInfo(self.modulePath, self.tableWidget_file)
-
         except FileNotFoundError as e:
             print(os.getcwd())
             self.parser = None
@@ -277,157 +241,10 @@ class WindowClass(QMainWindow, form_class) :
             print(a)
             parser_fd = os.open(self.dataman,0)
             self.parser = missionParser(parser_fd)
-            # self.fileInfo(self.modulePath, self.tableWidget_file)
             pass
 
         QApplication.processEvents()
         self.dataRefreshButton.setEnabled(True)
-
-    def HMAC_calc(self, filename):
-        command("cd /\n", self.mavPort)
-        s = command("cat " + filename.strip(".") + "h\n", self.mavPort).split("\n")[1]
-        print("received raw: ", s)
-        s = s[40:68]
-
-        res = 0
-        a = [ord(i) for i in s]
-        for i in a:
-            res = (res << 8) + i
-        hmac_rec = str(hex(res))[2:]
-        print("received hmac file: ", hmac_rec)
-
-        h = hashlib.sha3_224()
-        plain = open(filename, 'rb').read()
-        plain = plain + b"mesl:1234"
-        h.update(plain)
-        hmac_cur = h.hexdigest()
-        print("hmac of current file: ", hmac_cur)
-
-        return hmac_rec == hmac_cur
-
-    def fileInfo(self, filename, table):
-        try:
-            fd = os.open(filename, os.O_BINARY)
-        except FileNotFoundError:
-            return
-        except AttributeError as a:
-            print(a)            
-            fd = os.open(filename,0)
-            
-        if fd < 0:
-            if self.ftp is not None:
-                self.getFileFromUAV()
-                try:
-                    fd = os.open(filename, os.O_BINARY)
-                except AttributeError as a:
-                    print(a)            
-                    fd = os.open(filename,0)
-            elif fd < 0 or self.ftp is None:
-                return -1
-
-        if "dataman" in filename :
-            datamanId = self.parser.get_mission()[3]
-            encrypt = dataman_is_encrypted(self.parser.get_safe_points(), self.parser.get_fence_points(),
-                               self.parser.get_mission_item(datamanId), self.parser.get_mission())
-            if self.ftp is not None:
-                inte = self.HMAC_calc(filename)
-            else:
-                inte = "unconnected"
-
-        if "ulg" in filename:
-            encrypt = is_encrypted(filename)
-            inte = True
-
-        created = createdTime(filename)
-        hashSha = hash_sha1(filename)
-        hashMD5 = hash_md5(filename)
-
-        if self.ftp is not None:
-            ftpcrc = self.ftp.get_crc_by_name(filename[filename.find("/"):], 0)
-            Crc = crc()
-            CrcResult = Crc.crc32Check(filename=filename, checksum=ftpcrc[1])
-        else:
-            CrcResult = "unconnected"
-
-
-        if encrypt == 0:
-            encrypt = "False"
-        elif encrypt ==1 :
-            encrypt = "True"
-
-        header = ["created", "MD5", "SHA-1","CRC", "integrity"]
-        data = [created, hashSha,hashMD5,CrcResult,inte]
-
-        table.setColumnCount(2)
-        table.setRowCount(len(header))
-        table.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        table.verticalHeader().setVisible(False)
-        table.horizontalHeader().setVisible(False)
-
-        for i in range(len(header)):
-            table.setItem(i, 0, QTableWidgetItem(header[i]))
-            table.setItem(i, 1, QTableWidgetItem(str(data[i])))
-
-        table.resizeRowsToContents()
-        table.resizeColumnsToContents()
-        os.close(fd)
-
-    # def getCurrentItems(self):
-    #     if self.log_treeWidget.indexOfTopLevelItem(self.log_treeWidget.currentItem()) == -1:
-    #         self.parent_log = self.log_treeWidget.currentItem().parent().text(0)
-
-    # TODO: 로그 데이터 경로 수정
-
-    # def onChange(self):
-    #     tabIndex = self.tabWidget.indexOf(self.tabWidget.currentWidget())
-    #     #비행 데이터
-    #
-    #     if tabIndex == 1:
-    #         self.modulePath = "./fs/microsd/dataman"
-    #
-    #
-    #     #로그 데이터
-    #
-    #     elif tabIndex == 2:
-    #         username = getpass.getuser()
-    #         self.modulePath = "C:/Users/" + username  + "/Desktop/PX4Forensic/fs/microsd/log/2022-07-18/09_39_09.ulg"
-    #         #정보 출력
-    #         self.fileInfo(self.modulePath, self.tableWidget_file_log)
-    #         self.logParams(self.tableWidget_log_params, self.modulePath)
-    #         self.logMessages(self.tableWidget_log_messages, self.modulePath)
-    #
-    #     #설정 데이터
-    #     elif tabIndex == 3:
-    #         self.parameter_ui.show_parameter_list()
-
-    # def logParams(self, table, filepath):
-    #     _list = shell_log_params(filepath)
-    #     table.setColumnCount(2)
-    #     table.setRowCount(len(_list))
-    #     table.setEditTriggers(QAbstractItemView.NoEditTriggers)
-    #     table.verticalHeader().setVisible(False)
-    #     table.horizontalHeader().setVisible(False)
-    #
-    #     for i in range(len(_list)):
-    #         table.setItem(i, 0, QTableWidgetItem(_list[i][0]))
-    #         table.setItem(i, 1, QTableWidgetItem(str(_list[i][1])))
-    #
-    #     table.resizeRowsToContents()
-    #     table.resizeColumnsToContents()
-    #
-    # def logMessages(self, table, filepath):
-    #     _list = shell_log_messages(filepath)
-    #     table.setColumnCount(1)
-    #     table.setRowCount(len(_list))
-    #     table.setEditTriggers(QAbstractItemView.NoEditTriggers)
-    #     table.verticalHeader().setVisible(False)
-    #     table.horizontalHeader().setVisible(False)
-    #
-    #     for i in range(len(_list)):
-    #         table.setItem(i, 0, QTableWidgetItem(_list[i]))
-    #
-    #     table.resizeRowsToContents()
-    #     table.resizeColumnsToContents()
 
 def PX4Inspector():
     suppress_qt_warnings()
