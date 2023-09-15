@@ -261,7 +261,7 @@
        <string>점검 시작</string>
       </property>
      </widget>
-     <widget class="QTextEdit" name="ftp_dir_textEdit">
+     <widget class="QTextEdit" name="ftp_result_textEdit">
       <property name="geometry">
        <rect>
         <x>240</x>
@@ -319,17 +319,6 @@
       <string>MAVLink점검</string>
      </attribute>
     </widget>
-   </widget>
-   <widget class="QWidget" name="layoutWidget">
-    <property name="geometry">
-     <rect>
-      <x>31</x>
-      <y>140</y>
-      <width>107</width>
-      <height>448</height>
-     </rect>
-    </property>
-    <layout class="QHBoxLayout" name="horizontalLayout"/>
    </widget>
   </widget>
   <widget class="QStatusBar" name="statusbar">

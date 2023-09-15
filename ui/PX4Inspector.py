@@ -1,3 +1,5 @@
+# Todo : onChange 같은 코드 정리해도 된다고 판단했으면 정리하기
+
 import sys
 import os.path
 import getpass
@@ -124,14 +126,21 @@ class WindowClass(QMainWindow, form_class) :
         ftp_result = ftpInspectBranch(selected_item_number)
         items = self.ftp_result_tableWidget.findItems(selected_item_number, Qt.MatchExactly)
         item = items[0]
-        if ftp_result is True:
+        if ftp_result == 1:
             temp_item = QTableWidgetItem()
             temp_item.setText("O")
             self.ftp_result_tableWidget.setItem(item.row(), 1, temp_item)
-        else :
+            self.ftp_result_textEdit.setText(ftpInspectSuccessResultMessage(selected_item_number))
+        elif ftp_result == 0 :
             temp_item = QTableWidgetItem()
             temp_item.setText("X")
             self.ftp_result_tableWidget.setItem(item.row(), 1, temp_item)
+            self.ftp_result_textEdit.setText('이 드론은 선택한 항목의 보안 요구사항을 충족시키지 않습니다.')
+        else :
+            temp_item = QTableWidgetItem()
+            temp_item.setText("보류")
+            self.ftp_result_tableWidget.setItem(item.row(), 1, temp_item)
+            self.ftp_result_textEdit.setText(ftpInspectHoldResultMessage(selected_item_number))
 
 
     def initUI(self):
@@ -172,9 +181,7 @@ class WindowClass(QMainWindow, form_class) :
             if res == -1:
                 QMessageBox.about(self, '연결 오류', 'PX4와 연결되어 있지 않습니다.')
                 return -1
-        # self.radio_safepoint.setDisabled(True)
-        # self.radio_geofencepoint.setDisabled(True)
-        # self.radio_waypoint.setDisabled(True)
+
         self.dataRefreshButton.setDisabled(True)
 
         st = []
@@ -259,7 +266,7 @@ class WindowClass(QMainWindow, form_class) :
             self.parser = missionParser(parser_fd)
 
             # 파일 정보 표시(mission)
-            self.fileInfo(self.modulePath, self.tableWidget_file)
+            # self.fileInfo(self.modulePath, self.tableWidget_file)
 
         except FileNotFoundError as e:
             print(os.getcwd())
@@ -270,7 +277,7 @@ class WindowClass(QMainWindow, form_class) :
             print(a)
             parser_fd = os.open(self.dataman,0)
             self.parser = missionParser(parser_fd)
-            self.fileInfo(self.modulePath, self.tableWidget_file)
+            # self.fileInfo(self.modulePath, self.tableWidget_file)
             pass
 
         QApplication.processEvents()
@@ -297,33 +304,6 @@ class WindowClass(QMainWindow, form_class) :
         print("hmac of current file: ", hmac_cur)
 
         return hmac_rec == hmac_cur
-
-    def getCurrentItems(self):
-        if self.log_treeWidget.indexOfTopLevelItem(self.log_treeWidget.currentItem()) == -1:
-            self.parent_log = self.log_treeWidget.currentItem().parent().text(0)
-
-    #TODO: 로그 데이터 경로 수정
-    def onChange(self):
-        tabIndex = self.tabWidget.indexOf(self.tabWidget.currentWidget())
-        #비행 데이터
-
-        if tabIndex == 1:
-            self.modulePath = "./fs/microsd/dataman"
-            
-
-        #로그 데이터
-
-        elif tabIndex == 2:
-            username = getpass.getuser()
-            self.modulePath = "C:/Users/" + username  + "/Desktop/PX4Forensic/fs/microsd/log/2022-07-18/09_39_09.ulg"   
-            #정보 출력
-            self.fileInfo(self.modulePath, self.tableWidget_file_log)
-            self.logParams(self.tableWidget_log_params, self.modulePath)
-            self.logMessages(self.tableWidget_log_messages, self.modulePath)
-                        
-        #설정 데이터
-        elif tabIndex == 3:
-            self.parameter_ui.show_parameter_list()
 
     def fileInfo(self, filename, table):
         try:
@@ -392,34 +372,62 @@ class WindowClass(QMainWindow, form_class) :
         table.resizeColumnsToContents()
         os.close(fd)
 
-    def logParams(self, table, filepath):
-        _list = shell_log_params(filepath)
-        table.setColumnCount(2)
-        table.setRowCount(len(_list))
-        table.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        table.verticalHeader().setVisible(False)
-        table.horizontalHeader().setVisible(False)
+    # def getCurrentItems(self):
+    #     if self.log_treeWidget.indexOfTopLevelItem(self.log_treeWidget.currentItem()) == -1:
+    #         self.parent_log = self.log_treeWidget.currentItem().parent().text(0)
 
-        for i in range(len(_list)):
-            table.setItem(i, 0, QTableWidgetItem(_list[i][0]))
-            table.setItem(i, 1, QTableWidgetItem(str(_list[i][1])))
+    # TODO: 로그 데이터 경로 수정
 
-        table.resizeRowsToContents()
-        table.resizeColumnsToContents()
+    # def onChange(self):
+    #     tabIndex = self.tabWidget.indexOf(self.tabWidget.currentWidget())
+    #     #비행 데이터
+    #
+    #     if tabIndex == 1:
+    #         self.modulePath = "./fs/microsd/dataman"
+    #
+    #
+    #     #로그 데이터
+    #
+    #     elif tabIndex == 2:
+    #         username = getpass.getuser()
+    #         self.modulePath = "C:/Users/" + username  + "/Desktop/PX4Forensic/fs/microsd/log/2022-07-18/09_39_09.ulg"
+    #         #정보 출력
+    #         self.fileInfo(self.modulePath, self.tableWidget_file_log)
+    #         self.logParams(self.tableWidget_log_params, self.modulePath)
+    #         self.logMessages(self.tableWidget_log_messages, self.modulePath)
+    #
+    #     #설정 데이터
+    #     elif tabIndex == 3:
+    #         self.parameter_ui.show_parameter_list()
 
-    def logMessages(self, table, filepath):
-        _list = shell_log_messages(filepath)
-        table.setColumnCount(1)
-        table.setRowCount(len(_list))
-        table.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        table.verticalHeader().setVisible(False)
-        table.horizontalHeader().setVisible(False)
-        
-        for i in range(len(_list)):
-            table.setItem(i, 0, QTableWidgetItem(_list[i]))
-  
-        table.resizeRowsToContents()
-        table.resizeColumnsToContents()
+    # def logParams(self, table, filepath):
+    #     _list = shell_log_params(filepath)
+    #     table.setColumnCount(2)
+    #     table.setRowCount(len(_list))
+    #     table.setEditTriggers(QAbstractItemView.NoEditTriggers)
+    #     table.verticalHeader().setVisible(False)
+    #     table.horizontalHeader().setVisible(False)
+    #
+    #     for i in range(len(_list)):
+    #         table.setItem(i, 0, QTableWidgetItem(_list[i][0]))
+    #         table.setItem(i, 1, QTableWidgetItem(str(_list[i][1])))
+    #
+    #     table.resizeRowsToContents()
+    #     table.resizeColumnsToContents()
+    #
+    # def logMessages(self, table, filepath):
+    #     _list = shell_log_messages(filepath)
+    #     table.setColumnCount(1)
+    #     table.setRowCount(len(_list))
+    #     table.setEditTriggers(QAbstractItemView.NoEditTriggers)
+    #     table.verticalHeader().setVisible(False)
+    #     table.horizontalHeader().setVisible(False)
+    #
+    #     for i in range(len(_list)):
+    #         table.setItem(i, 0, QTableWidgetItem(_list[i]))
+    #
+    #     table.resizeRowsToContents()
+    #     table.resizeColumnsToContents()
 
 def PX4Inspector():
     suppress_qt_warnings()
