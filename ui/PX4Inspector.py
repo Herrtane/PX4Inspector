@@ -10,6 +10,7 @@ from src.FTPReader import FTPReader
 from src.Mission.PX4MissionParser import missionParser
 from src.Mission.tools import SerialPort, command
 from src.FTPInspectModule import *
+from src.MAVLinkInspectModule import *
 
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import Qt
@@ -47,7 +48,11 @@ class WindowClass(QMainWindow, form_class) :
         self.modulePath = ""
         self.clicked_log = ""
         self.parent_log = ""
+
+        # MAVLink Connection 핵심 객체 (이후 주로 사용할 객체)
+        # MavPort.py 파일에서 클래스 변수, 메서드 참고
         self.mavPort = None
+
         self.label_connected.setText(f"unconnected")
         self.login = None
         self.ftp = None
@@ -74,6 +79,8 @@ class WindowClass(QMainWindow, form_class) :
         self.dataRefreshButton.clicked.connect(self.getFileFromUAV)
         self.ftp_listWidget.itemDoubleClicked.connect(self.ftpDoubleClicked)
         self.ftp_start_pushButton.clicked.connect(self.ftpStartClicked)
+        self.mavlink_listWidget.itemDoubleClicked.connect(self.mavlinkDoubleClicked)
+        self.mavlink_start_pushButton.clicked.connect(self.mavlinkStartClicked)
 
         self.fig = plt.Figure(figsize=(1, 1))
         self.canvas = FigureCanvas(self.fig)
@@ -82,13 +89,13 @@ class WindowClass(QMainWindow, form_class) :
         self.log_canvas = FigureCanvas(self.log_fig)
 
     def ftpDoubleClicked(self):
-        global selected_item_name
-        selected_item_name = self.ftp_listWidget.currentItem().text()
-        self.ftp_selected_textEdit.setText(selected_item_name)
+        global selected_ftp_item_name
+        selected_ftp_item_name = self.ftp_listWidget.currentItem().text()
+        self.ftp_selected_textEdit.setText(selected_ftp_item_name)
 
 
     def ftpStartClicked(self):
-        selected_item_number = selected_item_name.split('.')[0]
+        selected_item_number = selected_ftp_item_name.split('.')[0]
         # FTPInspectModule 함수로 분기
         ftp_result = ftpInspectBranch(selected_item_number)
         items = self.ftp_result_tableWidget.findItems(selected_item_number, Qt.MatchExactly)
@@ -109,6 +116,36 @@ class WindowClass(QMainWindow, form_class) :
             self.ftp_result_tableWidget.setItem(item.row(), 1, temp_item)
             self.ftp_result_textEdit.setText(ftpInspectHoldResultMessage(selected_item_number))
 
+    def mavlinkDoubleClicked(self):
+        global selected_mavlink_item_name
+        selected_mavlink_item_name = self.mavlink_listWidget.currentItem().text()
+        self.mavlink_selected_textEdit.setText(selected_mavlink_item_name)
+
+    # TODO : mavport 객체를 parameter로 전달해야할듯?
+    # TODO : 아직 결과창을 ui에 안만들어서 result 출력 부분에서 에러 발생
+    def mavlinkStartClicked(self):
+        print("Heartbeat from system (system %u component %u)" % (self.mavPort.mav.target_system, self.mavPort.mav.target_component))
+        # self.mavPort.mav.send()
+        selected_item_number = selected_mavlink_item_name.split('.')[0]
+        # FTPInspectModule 함수로 분기
+        mavlink_result = mavlinkInspectBranch(selected_item_number)
+        items = self.mavlink_result_tableWidget.findItems(selected_item_number, Qt.MatchExactly)
+        item = items[0]
+        if mavlink_result == 1:
+            temp_item = QTableWidgetItem()
+            temp_item.setText("O")
+            self.mavlink_result_tableWidget.setItem(item.row(), 1, temp_item)
+            self.mavlink_result_textEdit.setText(mavlinkInspectSuccessResultMessage(selected_item_number))
+        elif mavlink_result == 0:
+            temp_item = QTableWidgetItem()
+            temp_item.setText("X")
+            self.mavlink_result_tableWidget.setItem(item.row(), 1, temp_item)
+            self.mavlink_result_textEdit.setText('이 드론은 선택한 항목의 보안 요구사항을 충족시키지 않습니다.')
+        else:
+            temp_item = QTableWidgetItem()
+            temp_item.setText("보류")
+            self.mavlink_result_tableWidget.setItem(item.row(), 1, temp_item)
+            self.mavlink_result_textEdit.setText(mavlinkInspectHoldResultMessage(selected_item_number))
 
     def initUI(self):
         self.setWindowTitle('PX4Inspector')
