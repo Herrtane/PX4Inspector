@@ -121,14 +121,14 @@ class WindowClass(QMainWindow, form_class) :
         selected_mavlink_item_name = self.mavlink_listWidget.currentItem().text()
         self.mavlink_selected_textEdit.setText(selected_mavlink_item_name)
 
-    # TODO : mavport 객체를 parameter로 전달해야할듯?
-    # TODO : 아직 결과창을 ui에 안만들어서 result 출력 부분에서 에러 발생
+    # TODO :
     def mavlinkStartClicked(self):
-        print("Heartbeat from system (system %u component %u)" % (self.mavPort.mav.target_system, self.mavPort.mav.target_component))
+        # print("Heartbeat from system (system %u component %u)" % (self.mavPort.mav.target_system, self.mavPort.mav.target_component))
         # self.mavPort.mav.send()
         selected_item_number = selected_mavlink_item_name.split('.')[0]
-        # FTPInspectModule 함수로 분기
-        mavlink_result = mavlinkInspectBranch(selected_item_number)
+        # MavlinkInspectModule 함수로 분기
+        mavlink_result, mavlink_result_msg = mavlinkInspectBranch(self.mavPort.mav, selected_item_number)
+
         items = self.mavlink_result_tableWidget.findItems(selected_item_number, Qt.MatchExactly)
         item = items[0]
         if mavlink_result == 1:
@@ -146,6 +146,7 @@ class WindowClass(QMainWindow, form_class) :
             temp_item.setText("보류")
             self.mavlink_result_tableWidget.setItem(item.row(), 1, temp_item)
             self.mavlink_result_textEdit.setText(mavlinkInspectHoldResultMessage(selected_item_number))
+        self.mavlink_recvpacket_textEdit.setText(mavlink_result_msg)
 
     def initUI(self):
         self.setWindowTitle('PX4Inspector')
