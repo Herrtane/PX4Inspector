@@ -1,31 +1,40 @@
 # Todo : onChange 같은 코드 정리해도 된다고 판단했으면 정리하기
-# Todo : 중요파일 무결성 검증은 Write 관련 연구 필요
+# Todo : Windows에서 PyQt6 코드 실행해보고, 성공하면 코드 전환하기
+# Todo : Requirements에서 Pandas 같은거 정리하기
 
 import sys
 import os.path
 
-from PyQt5.QtWidgets import *
+from PyQt6.QtWidgets import *
 from src.mavlink_shell import get_serial_item
 from src.FTPReader import FTPReader
-from src.Mission.PX4MissionParser import missionParser
 from src.Mission.tools import SerialPort, command
 from src.FTPInspectModule import *
 from src.MAVLinkInspectModule import *
 
-from PyQt5.QtGui import QIcon
-from PyQt5.QtCore import Qt
+from PyQt6.QtGui import QIcon
+from PyQt6.QtCore import Qt
 
-from PyQt5 import uic
+from PyQt6 import uic
 from os import environ
 import os
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
+####################################################################
+# Initial Configuration Code
 
 # Use if it have to set port manually
 # if you use linux os, check your serial port that connected with px4
 # example: Serial = '/dev/ttyACM0'
-Serial = None
+Serial = '/dev/tty.usbmodem01'
+
+# Windows 용
+# form_class = uic.loadUiType("ui/PX4Inspector.ui")[0]
+# download_class = uic.loadUiType("ui/downloadProgress.ui")[0]
+
+# Mac 용
+form_class = uic.loadUiType("./ui/PX4Inspector.ui")[0]
+download_class = uic.loadUiType("./ui/downloadProgress.ui")[0]
+####################################################################
 
 # 해상도별 글자크기 강제 고정하는 함수
 def suppress_qt_warnings():
@@ -33,9 +42,6 @@ def suppress_qt_warnings():
     environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
     environ["QT_SCREEN_SCALE_FACTORS"] = "1"
     environ["QT_SCALE_FACTOR"] = "1"
-
-form_class = uic.loadUiType("ui/PX4Inspector.ui")[0]
-download_class = uic.loadUiType("ui/downloadProgress.ui")[0]
 
 class WindowClass(QMainWindow, form_class) :
     def __init__(self) :
@@ -61,32 +67,20 @@ class WindowClass(QMainWindow, form_class) :
         self.connectSerial(serial=Serial)
         self.initUI()
 
-        self.dataman = "./fs/microsd/dataman"
+        print(os.getcwd())
 
-        try:
-            parser_fd = os.open(self.dataman, os.O_BINARY)
-            self.parser = missionParser(parser_fd)
+        if path.exists('./fs/microsd/parameters_backup.bson'):
+            # parser_fd = os.open(self.dataman, os.O_BINARY)
             QMessageBox.about(self, '기존 데이터 발견', '이전 작업에서 불러왔던 데이터가 발견되었습니다. 해당 데이터를 로드합니다.')
-        except FileNotFoundError as e:
+        else :
             QMessageBox.about(self, '기존 데이터 없음', '검사 대상 PX4 드론에서 데이터를 불러온 적이 없습니다. 데이터를 새로 추출합니다. 해당 작업은 몇 분 정도 소요될 수 있습니다.')
             self.getFileFromUAV()
-            pass
-        except AttributeError as a:
-            print(a)            
-            parser_fd = os.open(self.dataman,0)
-            self.parser = missionParser(parser_fd)
 
         self.dataRefreshButton.clicked.connect(self.getFileFromUAV)
         self.ftp_listWidget.itemDoubleClicked.connect(self.ftpDoubleClicked)
         self.ftp_start_pushButton.clicked.connect(self.ftpStartClicked)
         self.mavlink_listWidget.itemDoubleClicked.connect(self.mavlinkDoubleClicked)
         self.mavlink_start_pushButton.clicked.connect(self.mavlinkStartClicked)
-
-        self.fig = plt.Figure(figsize=(1, 1))
-        self.canvas = FigureCanvas(self.fig)
-
-        self.log_fig = plt.Figure(figsize=(1, 1))
-        self.log_canvas = FigureCanvas(self.log_fig)
 
     def ftpDoubleClicked(self):
         global selected_ftp_item_name
@@ -98,7 +92,8 @@ class WindowClass(QMainWindow, form_class) :
         selected_item_number = selected_ftp_item_name.split('.')[0]
         # FTPInspectModule 함수로 분기
         ftp_result = ftpInspectBranch(selected_item_number)
-        items = self.ftp_result_tableWidget.findItems(selected_item_number, Qt.MatchExactly)
+        # items = self.ftp_result_tableWidget.findItems(selected_item_number, Qt.MatchExactly) # PyQt5 용
+        items = self.ftp_result_tableWidget.findItems(selected_item_number, Qt.MatchFlag.MatchExactly)
         item = items[0]
         if ftp_result == 1:
             temp_item = QTableWidgetItem()
@@ -129,7 +124,8 @@ class WindowClass(QMainWindow, form_class) :
         # MavlinkInspectModule 함수로 분기
         mavlink_result, mavlink_result_msg = mavlinkInspectBranch(self.mavPort.mav, selected_item_number)
 
-        items = self.mavlink_result_tableWidget.findItems(selected_item_number, Qt.MatchExactly)
+        # items = self.mavlink_result_tableWidget.findItems(selected_item_number, Qt.MatchExactly) # PyQt5 용
+        items = self.mavlink_result_tableWidget.findItems(selected_item_number, Qt.MatchFlag.MatchExactly)
         item = items[0]
         if mavlink_result == 1:
             temp_item = QTableWidgetItem()
@@ -266,34 +262,14 @@ class WindowClass(QMainWindow, form_class) :
         self.statusbar.repaint()
         self.progressbar.setValue(0)
 
-        try:
-            parser_fd = os.open(self.modulePath, os.O_BINARY)
-            self.parser = missionParser(parser_fd)
-
-        except FileNotFoundError as e:
-            print(os.getcwd())
-            self.parser = None
-            print(e)
-            pass
-        except AttributeError as a:
-            print(a)
-            parser_fd = os.open(self.dataman,0)
-            self.parser = missionParser(parser_fd)
-            pass
-
         QApplication.processEvents()
         self.dataRefreshButton.setEnabled(True)
 
 def PX4Inspector():
     suppress_qt_warnings()
-    #QApplication : 프로그램을 실행시켜주는 클래스
-    app = QApplication(sys.argv) 
-
-    #WindowClass의 인스턴스 생성
-    myWindow = WindowClass() 
-
-    #프로그램 화면을 보여주는 코드
+    app = QApplication(sys.argv)
+    myWindow = WindowClass()
     myWindow.show()
 
-    #프로그램을 이벤트루프로 진입시키는(프로그램을 작동시키는) 코드
-    app.exec_()
+    # app.exec_() # Windows PyQt5 용
+    app.exec() # Mac PyQt6 용
