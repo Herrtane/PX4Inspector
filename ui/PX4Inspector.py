@@ -1,5 +1,4 @@
-# Todo : onChange 같은 코드 정리해도 된다고 판단했으면 정리하기
-# Todo : Windows에서 PyQt6 코드 실행해보고, 성공하면 코드 전환하기
+# Todo : 코드 정리 2차
 # Todo : Requirements에서 Pandas 같은거 정리하기
 
 import sys
@@ -8,7 +7,7 @@ import os.path
 from PyQt6.QtWidgets import *
 from src.mavlink_shell import get_serial_item
 from src.FTPReader import FTPReader
-from src.Mission.tools import SerialPort, command
+from src.Mission.tools import SerialPort
 from src.FTPInspectModule import *
 from src.MAVLinkInspectModule import *
 
@@ -120,11 +119,11 @@ class WindowClass(QMainWindow, form_class) :
     def mavlinkStartClicked(self):
         # print("Heartbeat from system (system %u component %u)" % (self.mavPort.mav.target_system, self.mavPort.mav.target_component))
         # self.mavPort.mav.send()
+
         selected_item_number = selected_mavlink_item_name.split('.')[0]
         # MavlinkInspectModule 함수로 분기
         mavlink_result, mavlink_result_msg = mavlinkInspectBranch(self.mavPort.mav, selected_item_number)
 
-        # items = self.mavlink_result_tableWidget.findItems(selected_item_number, Qt.MatchExactly) # PyQt5 용
         items = self.mavlink_result_tableWidget.findItems(selected_item_number, Qt.MatchFlag.MatchExactly)
         item = items[0]
         if mavlink_result == 1:
@@ -264,12 +263,12 @@ class WindowClass(QMainWindow, form_class) :
 
         QApplication.processEvents()
         self.dataRefreshButton.setEnabled(True)
+        QMessageBox.about(self, '추출 완료',
+                          '데이터를 갱신하기 위해 프로그램을 종료한 후, 다시 실행해주십시오.')
 
 def PX4Inspector():
     suppress_qt_warnings()
     app = QApplication(sys.argv)
     myWindow = WindowClass()
     myWindow.show()
-
-    # app.exec_() # Windows PyQt5 용
-    app.exec() # Mac PyQt6 용
+    app.exec()
