@@ -1,5 +1,6 @@
 import os
 from os import path
+from src.Mission.PX4MissionParser import missionParser
 
 # 추가적으로 모든 하위 디렉토리 구조를 전부 검색
 # 출력 형식 : 튜플 - (경로, 경로 내 디렉토리 리스트, 경로 내 파일 리스트)
@@ -9,7 +10,7 @@ from os import path
 # 1 : 요구사항 만족
 # 2 : 점검자에 의한 추가 점검 요 (보류)
 
-def ftpInspectBranch(item_number):
+def ftpInspectBranch(mav_port, item_number):
     if item_number == 'T07':
         result = cryptInspect()
     elif item_number == 'T10':
@@ -18,8 +19,12 @@ def ftpInspectBranch(item_number):
         result = backupInspect()
     elif item_number == 'T12':
         result = infoExposureInspect()
+    elif item_number == 'T31':
+        result = fileintegrityInspect(mav_port)
     elif item_number == 'T38':
         result = logInspect()
+    elif item_number == 'T43':
+        result = geofenceInspect()
     else:
         print('구현중..')
         result = 0
@@ -32,8 +37,12 @@ def ftpInspectSuccessResultMessage(item_number):
         result = '중요 데이터가 백업되는 것이 확인되었습니다.'
     elif item_number == 'T12':
         result = '파일 및 디렉터리에 대한 불필요한 정보 노출이 없는 것이 확인되었습니다.'
+    elif item_number == 'T31':
+        result = 'PX4내의 /fs/microsd 내부의 임의의 파일을 수정하려고 시도하였으나, 해당 파일에 대한 수정이 보호되었습니다. 따라서, 파일에 대한 무결성 검증이 이루어지는 것이 확인되었습니다.'
     elif item_number == 'T38':
         result = './fs/microsd/log' + ' 위치에서 로그 파일 및 디렉터리가 확인되었습니다.'
+    elif item_number == 'T43':
+        result = './fs/microsd/dataman 파일에서 geofence 정보가 설정되어 특정 지역 접근 방지 기능이 정상적으로 작동하는 것이 확인되었습니다.'
     else:
         result = '구현중'
     return result
@@ -48,6 +57,66 @@ def ftpInspectHoldResultMessage(item_number):
     else:
         result = '적절하지 않은 항목입니다.'
     return result
+
+def fileintegrityInspect(mav_port):
+    filename = "/fs/microsd/kkk"
+    mavMsg = {
+        'seq_number': 0,
+        'session': 0,
+        'opcode': 0,
+        'size': 0,
+        'req_opcode': 0,
+        'burst_complete': 0,
+        'offset': 0,
+        'data': []
+    }
+
+    while True:
+        mavBuffer = mav_port.ftp_read(4096)
+        if mavBuffer and len(mavBuffer) > 0:
+            print(mavBuffer)
+        else:
+            break
+
+    result = 0
+    mavMsg['data'] = 'hi'
+    mav_port.ftp_write(opcode=7, session=mavMsg['session'], data=mavMsg['data'], size=len(mavMsg['data']), offset=0)
+    while True:
+        mavMsg['seq_number'] = 0
+        mavBuffer = mav_port.ftp_read(4096)
+        if mavBuffer and len(mavBuffer) > 0:
+            print(mavBuffer)
+            if mavBuffer['opcode'] == 129:  # 오류 처리
+                if mavBuffer['data'][0] == 9:   # 파일이 Write Protected일 경우 (점검 목적)
+                    print("File protected")
+                    result = 1
+                else:
+                    if mavBuffer['data'][0] == 2:  # 운영체제 사이드에서 오류
+                        if mavBuffer['data'][1] == 13:  # Permission denied
+                            print("Permission denied")
+                            mav_port.ftp_close(seq_num=mavBuffer['seq_number'], session=0)
+                    result = 0
+                break
+            else:
+                mavMsg = mavBuffer
+                result = 0
+                break
+
+    mav_port.ftp_close(seq_num=mavMsg['seq_number'], session=0)
+    return result
+
+def geofenceInspect():
+    parser_fd = os.open("./fs/microsd/dataman", os.O_RDONLY)
+    parser = missionParser(parser_fd)
+    geoPoints = parser.get_fence_points()
+    print(geoPoints)
+    geo_count = 0
+    for i in geoPoints:
+        geo_count += 1
+    if geo_count > 0:
+        return 1
+    else:
+        return 0
 
 def cryptInspect():
     # 파일 접근 검사를 통해 파일이 추출되었다면 해당 파일을 점검자가 직접 추가 확인 해서 판단

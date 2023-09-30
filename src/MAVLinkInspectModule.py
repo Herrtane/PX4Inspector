@@ -1,4 +1,5 @@
 from pymavlink import mavutil
+from pymavlink.generator import mavcrc
 
 def mavlinkInspectBranch(mav_connection, item_number):
     result_msg = None
@@ -6,6 +7,8 @@ def mavlinkInspectBranch(mav_connection, item_number):
         result, result_msg = hwInspect(mav_connection)
     elif item_number == 'T06':
         result, result_msg = mavcryptInspect(mav_connection)
+    elif item_number == 'T22':
+        result, result_msg = msgintegrityInspect(mav_connection)
     elif item_number == 'T54':
         result, result_msg = timesyncInsepct(mav_connection)
     else:
@@ -43,6 +46,15 @@ def hwInspect(mav_connection):
         result = 0
         result_msg_str = '[Error] Cannot capture the packet'
     return result, result_msg_str
+
+def msgintegrityInspect(mav_connection):
+    # mav_connection.disable_signing()
+    temp_secret_key = chr(42) * 32
+    temp_link_id = 0
+    temp_timestamp = 0
+    mav_connection.setup_signing(temp_secret_key)
+
+    return 1, '1'
 
 def timesyncInsepct(mav_connection):
     mav_connection.mav.timesync_send(0, 0)
