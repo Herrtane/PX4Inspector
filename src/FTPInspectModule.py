@@ -10,7 +10,7 @@ from src.Mission.PX4MissionParser import missionParser
 # 1 : 요구사항 만족
 # 2 : 점검자에 의한 추가 점검 요 (보류)
 
-def ftpInspectBranch(mav_port, item_number):
+def ftpInspectBranch(mav_port, ftp, item_number):
     if item_number == 'T07':
         result = cryptInspect()
     elif item_number == 'T10':
@@ -20,7 +20,7 @@ def ftpInspectBranch(mav_port, item_number):
     elif item_number == 'T12':
         result = infoExposureInspect()
     elif item_number == 'T31':
-        result = fileintegrityInspect(mav_port)
+        result = fileintegrityInspect(mav_port, ftp)
     elif item_number == 'T38':
         result = logInspect()
     elif item_number == 'T43':
@@ -38,7 +38,7 @@ def ftpInspectSuccessResultMessage(item_number):
     elif item_number == 'T12':
         result = '파일 및 디렉터리에 대한 불필요한 정보 노출이 없는 것이 확인되었습니다.'
     elif item_number == 'T31':
-        result = 'PX4내의 /fs/microsd 내부의 임의의 파일을 수정하려고 시도하였으나, 해당 파일에 대한 수정이 보호되었습니다. 따라서, 파일에 대한 무결성 검증이 이루어지는 것이 확인되었습니다.'
+        result = 'PX4내의 /fs/microsd 내부의 임의의 파일을 수정하여 드론에 업로드 하였으나, 해당 파일에 대한 무결성 검증 기능의 존재로 파일 수정이 이루어지지 않았습니다. 따라서, 파일에 대한 무결성 검증이 이루어지는 것이 확인되었습니다.'
     elif item_number == 'T38':
         result = './fs/microsd/log' + ' 위치에서 로그 파일 및 디렉터리가 확인되었습니다.'
     elif item_number == 'T43':
@@ -54,56 +54,162 @@ def ftpInspectHoldResultMessage(item_number):
         result = './fs/microsd/parameters_backup.bson 파일이 발견되었습니다. 해당 파일 내 중요 데이터 백업에 대한 점검자의 추가 분석이 필요합니다.'
     elif item_number == 'T12':
         result = 'PX4Inspector 작업 폴더 내 ./bin, ./dev, ./etc, ./fs, ./obj, ./proc 디렉토리 추출이 완료되었습니다. 해당 디렉토리 내 불필요한 정보 노출에 대한 점검자의 추가 분석이 필요합니다.'
+    elif item_number == 'T31':
+        result = '항목을 점검하는 과정에서 오류가 발생하였습니다. 드론과의 연결상태, 점검하려는 드론 내의 대상 파일의 상태 등을 확인하고 다시 시도해주십시오.'
     else:
         result = '적절하지 않은 항목입니다.'
     return result
 
-def fileintegrityInspect(mav_port):
-    filename = "/fs/microsd/kkk"
-    mavMsg = {
-        'seq_number': 0,
-        'session': 0,
-        'opcode': 0,
-        'size': 0,
-        'req_opcode': 0,
-        'burst_complete': 0,
-        'offset': 0,
-        'data': []
+def fileintegrityInspect(mav_port, ftp):
+    filename = "/fs/microsd/kkkb"
+
+    f = open("." + filename, 'rb')
+    file_data = f.read()
+    backup_data = []
+    for i in file_data:
+        backup_data.append(i)
+    f.close()
+    print(backup_data)
+    backup_data_2 = backup_data[:]
+    backup_data_2[0] = 77
+    backup_data_2[1] = 66
+    print(backup_data_2)
+
+    result = 2
+    offset = 0
+    send_size = 0
+    # 매우 주의 : Sequence number 설정 안하면 드론에서 계속 똑같은 메시지만 보낸다...
+
+    # Open and Read
+    ftpSend(mav_port, opcode=4, data=filename, size=len(filename), seq_number=1)
+    recv_msg = ftpRecvParsor(mav_port)
+    print(recv_msg)
+    total_size = 0
+    for i in range(4):
+        total_size += recv_msg['data'][i] * pow(256, i)
+    filesize = total_size
+    if total_size - offset > 230:
+        read_size = 230
+    elif total_size - offset == 0:
+        read_size = 1
+    else:
+        read_size = total_size - offset
+    print(filesize)
+    ftpSend(mav_port, opcode=5, data=filename, size=read_size, offset=0, seq_number=2)
+    recv_msg = ftpRecvParsor(mav_port)
+    print(recv_msg)
+
+    ftpSend(mav_port, opcode=1, seq_number=3)
+    recv_msg = ftpRecvParsor(mav_port)
+    print(recv_msg)
+
+
+    # Create and Write
+    ftpSend(mav_port, opcode=6, data=filename, size=len(filename), seq_number=4)
+    recv_msg = ftpRecvParsor(mav_port)
+    print(recv_msg)
+
+    # ftpSend(mav_port, opcode=7, size=len(backup_data_2), data=backup_data_2, offset=offset,
+    #         seq_number=5)
+    # recv_msg = ftpRecvParsor(mav_port)
+    # print(recv_msg)
+    while True:
+        if offset >= len(backup_data_2):
+            break
+        if len(backup_data_2) > 230:
+            send_size = 230
+        else:
+            send_size = len(backup_data_2)
+        ftpSend(mav_port, opcode=7, size=send_size, data=backup_data_2, offset=offset, seq_number=5)
+        print(f"{filename}: {offset} of {len(backup_data_2)}")
+        recv_msg = ftpRecvParsor(mav_port)
+        print(recv_msg)
+        offset += send_size
+
+    ftpSend(mav_port, opcode=1, seq_number=6)
+    recv_msg = ftpRecvParsor(mav_port)
+    print(recv_msg)
+
+    # Open and Read
+    ftpSend(mav_port, opcode=4, data=filename, size=len(filename), seq_number=7)
+    recv_msg = ftpRecvParsor(mav_port)
+    print(recv_msg)
+    ftpSend(mav_port, opcode=5, data=filename, size=230, offset=0, seq_number=8)
+    recv_msg = ftpRecvParsor(mav_port)
+    print(recv_msg)
+    print(recv_msg['data'][0])
+    print(recv_msg['data'][1])
+    if recv_msg['data'][0] == 77 and recv_msg['data'][1] == 66:
+        result = 0
+    else:
+        result = 1
+
+    ftpSend(mav_port, opcode=1, seq_number=9)
+    recv_msg = ftpRecvParsor(mav_port)
+    print(recv_msg)
+
+    return result
+
+def ftpSend(mavPort, opcode=0, data='', size=0, offset=0, session=0, seq_number=0):
+    payload = []
+
+    # write sequence
+    for i in range(2):
+        payload.append(seq_number % 256)
+        seq_number = int((seq_number - seq_number % 256) / 256)
+
+    # write session
+    payload.append(session)
+
+    # write opcode
+    payload.append(opcode)
+
+    # write size
+    payload.append(size)
+
+    # write req opcode
+    payload.append(0)
+
+    # write burst_complete
+    payload.append(0)
+
+    # write padding
+    payload.append(0)
+
+    # write offset
+    for i in range(4):
+        payload.append(offset % 256)
+        offset = int((offset - offset % 256) / 256)
+
+    # write data
+    for x in data:
+        if str(type(x)) == "<class 'str'>":
+            payload.append(ord(x))
+        else:
+            payload.append(x)
+
+    # write some bytes
+    print("sending '%s' of len %u" % (payload, len(payload)), 2)
+
+    payload.extend([0] * (251 - len(payload)))
+    mavPort.mav.mav.file_transfer_protocol_send(0, mavPort.mav.target_system, mavPort.mav.target_component, payload)
+
+def ftpRecvParsor(mavPort):
+    msg = mavPort.mav.recv_match(type='FILE_TRANSFER_PROTOCOL', blocking=True,
+                            timeout=0.1)
+    data = msg.payload
+    ret = {
+        'seq_number': data[0] + data[1] * 256,
+        'session': data[2],
+        'opcode': data[3],
+        'size': data[4],
+        'burst_complete': data[6],
+        'req_opcode': data[5],
+        'offset': data[8] + data[9] * 256 + data[10] * (256 * 256) + data[11] * (256 * 256 * 256),
+        'data': data[12:12 + data[4]]
     }
 
-    while True:
-        mavBuffer = mav_port.ftp_read(4096)
-        if mavBuffer and len(mavBuffer) > 0:
-            print(mavBuffer)
-        else:
-            break
-
-    result = 0
-    mavMsg['data'] = 'hi'
-    mav_port.ftp_write(opcode=7, session=mavMsg['session'], data=mavMsg['data'], size=len(mavMsg['data']), offset=0)
-    while True:
-        mavMsg['seq_number'] = 0
-        mavBuffer = mav_port.ftp_read(4096)
-        if mavBuffer and len(mavBuffer) > 0:
-            print(mavBuffer)
-            if mavBuffer['opcode'] == 129:  # 오류 처리
-                if mavBuffer['data'][0] == 9:   # 파일이 Write Protected일 경우 (점검 목적)
-                    print("File protected")
-                    result = 1
-                else:
-                    if mavBuffer['data'][0] == 2:  # 운영체제 사이드에서 오류
-                        if mavBuffer['data'][1] == 13:  # Permission denied
-                            print("Permission denied")
-                            mav_port.ftp_close(seq_num=mavBuffer['seq_number'], session=0)
-                    result = 0
-                break
-            else:
-                mavMsg = mavBuffer
-                result = 0
-                break
-
-    mav_port.ftp_close(seq_num=mavMsg['seq_number'], session=0)
-    return result
+    return ret
 
 def geofenceInspect():
     parser_fd = os.open("./fs/microsd/dataman", os.O_RDONLY)

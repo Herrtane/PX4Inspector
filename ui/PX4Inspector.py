@@ -90,7 +90,7 @@ class WindowClass(QMainWindow, form_class) :
     def ftpStartClicked(self):
         selected_item_number = selected_ftp_item_name.split('.')[0]
         # FTPInspectModule 함수로 분기
-        ftp_result = ftpInspectBranch(self.mavPort, selected_item_number)
+        ftp_result = ftpInspectBranch(self.mavPort, self.ftp, selected_item_number)
         # items = self.ftp_result_tableWidget.findItems(selected_item_number, Qt.MatchExactly) # PyQt5 용
         items = self.ftp_result_tableWidget.findItems(selected_item_number, Qt.MatchFlag.MatchExactly)
         item = items[0]

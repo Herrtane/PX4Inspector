@@ -11,6 +11,10 @@ def mavlinkInspectBranch(mav_connection, item_number):
         result, result_msg = msgintegrityInspect(mav_connection)
     elif item_number == 'T54':
         result, result_msg = timesyncInsepct(mav_connection)
+    elif item_number == 'T60':
+        result, result_msg = flightmodeInspect(mav_connection)
+    elif item_number == 'T62':
+        result, result_msg = inappropriateorderInspect(mav_connection)
     else:
         print('구현중..')
         result = 0
@@ -79,13 +83,52 @@ def mavcryptInspect(mav_connection):
         result_msg_str = '[Error] Cannot capture the packet'
     return result, result_msg_str
 
+def flightmodeInspect(mav_connection):
+    # https://discuss.px4.io/t/mav-cmd-do-set-mode-all-possible-modes/8495/2
+    mav_connection.mav.command_long_send(mav_connection.target_system, mav_connection.target_component,
+                                         mavutil.mavlink.MAV_CMD_DO_SET_MODE, 0, 0, 0, 0, 0, 0, 0, 0)
+    result_msg = mav_connection.recv_match(type='COMMAND_ACK', blocking=True)
+    print(result_msg)
+    if result_msg and result_msg.command == mavutil.mavlink.MAV_CMD_DO_SET_MODE :
+        if result_msg.result == 0 :
+            result = 1
+        # result가 1이면 GPS 등의 설정 오류로 일시적으로 명령이 보류된 상태
+        elif result_msg.result == 1 :
+            result = 2
+        result_msg_str = msgParsor(result_msg)
+    else :
+        result = 0
+        result_msg_str = '[Error] Cannot capture the packet'
+    return result, result_msg_str
+
+def inappropriateorderInspect(mav_connection):
+    mav_connection.mav.command_int_send(mav_connection.target_system, mav_connection.target_component, 0,
+                                         mavutil.mavlink.MAV_CMD_NAV_LAND, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+    result_msg = mav_connection.recv_match(type='COMMAND_ACK', blocking=True)
+    print(result_msg)
+    if result_msg and result_msg.command == mavutil.mavlink.MAV_CMD_NAV_LAND:
+        if result_msg.result == 0:
+            result = 0
+        # result가 1이면 GPS 등의 설정 오류로 일시적으로 명령이 보류된 상태
+        elif result_msg.result == 1:
+            result = 2
+        result_msg_str = msgParsor(result_msg)
+    else:
+        result = 1
+        result_msg_str = msgParsor(result_msg)
+    return result, result_msg_str
+
 def mavlinkInspectSuccessResultMessage(item_number):
     if item_number == 'T46':
         result = 'T46 성공'
     elif item_number == 'T06':
         result = 'T06 성공'
     elif item_number == 'T54':
-        result = 'T54 성공'
+        result = 'Time Sync 메시지가 정상적으로 송수신되어, 드론과의 시간 동기화가 이루어지는 것이 확인되었습니다.'
+    elif item_number == 'T60':
+        result = 'Preflight 모드로 비행 모드가 정상적으로 변경되어, 비행 모드 설정 및 변경 기능이 제공되는 것이 확인되었습니다.'
+    elif item_number == 'T62':
+        result = '제어 명령 오류 확인이 제대로 이루어지고 있습니다.'
     else:
         result = '구현중'
     return result
@@ -95,6 +138,10 @@ def mavlinkInspectHoldResultMessage(item_number):
         result = 'ARMING 명령이 Accepted 되었으나, GPS 설정 등이 제대로 이루어지지 않아 일시적으로 명령이 보류된 상태입니다. 드론 설정을 마친 후에 재시도하십시오.'
     elif item_number == 'T06':
         result = '드론으로부터 수신된 HEARTBEAT 메시지를 캡쳐하였습니다. 점검자에 의한 암호화 여부 추가 점검이 필요합니다.'
+    elif item_number == 'T60':
+        result = '비행 모드 변경 명령이 Accepted 되었으나, GPS 설정 등이 제대로 이루어지지 않았거나 해당 비행 모드가 적절하지 않아서 일시적으로 명령이 보류된 상태입니다. 설정을 검토한 후에 재시도하십시오.'
+    elif item_number == 'T62':
+        result = 'LANDING 명령이 전달되었으나, GPS 설정 등이 제대로 이루어지지 않아 일시적으로 명령이 보류된 상태입니다. 드론 설정을 마친 후에 재시도하십시오.'
     else:
         result = '적절하지 않은 항목입니다.'
     return result
