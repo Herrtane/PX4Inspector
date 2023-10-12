@@ -35,7 +35,6 @@ form_class = uic.loadUiType("./ui/PX4Inspector.ui")[0]
 download_class = uic.loadUiType("./ui/downloadProgress.ui")[0]
 ####################################################################
 
-# 해상도별 글자크기 강제 고정하는 함수
 def suppress_qt_warnings():
     environ["QT_DEVICE_PIXEL_RATIO"] = "0"
     environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
@@ -69,7 +68,6 @@ class WindowClass(QMainWindow, form_class) :
         print(os.getcwd())
 
         if path.exists('./fs/microsd/parameters_backup.bson'):
-            # parser_fd = os.open(self.dataman, os.O_BINARY)
             QMessageBox.about(self, '기존 데이터 발견', '이전 작업에서 불러왔던 데이터가 발견되었습니다. 해당 데이터를 로드합니다.')
         else :
             QMessageBox.about(self, '기존 데이터 없음', '검사 대상 PX4 드론에서 데이터를 불러온 적이 없습니다. 데이터를 새로 추출합니다. 해당 작업은 몇 분 정도 소요될 수 있습니다.')
