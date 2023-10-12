@@ -118,7 +118,7 @@ class WindowClass(QMainWindow, form_class) :
     def mavlinkStartClicked(self):
         selected_item_number = selected_mavlink_item_name.split('.')[0]
         # MavlinkInspectModule 함수로 분기
-        mavlink_result, mavlink_result_msg = mavlinkInspectBranch(self.mavPort.mav, selected_item_number)
+        mavlink_result, mavlink_result_msg, mavlink_send_msg = mavlinkInspectBranch(self.mavPort.mav, selected_item_number)
 
         items = self.mavlink_result_tableWidget.findItems(selected_item_number, Qt.MatchFlag.MatchExactly)
         item = items[0]
@@ -138,6 +138,7 @@ class WindowClass(QMainWindow, form_class) :
             self.mavlink_result_tableWidget.setItem(item.row(), 1, temp_item)
             self.mavlink_result_textEdit.setText(mavlinkInspectHoldResultMessage(selected_item_number))
         self.mavlink_recvpacket_textEdit.setText(mavlink_result_msg)
+        self.mavlink_sendpacket_textEdit.setText(mavlink_send_msg)
 
     def initUI(self):
         self.setWindowTitle('PX4Inspector')

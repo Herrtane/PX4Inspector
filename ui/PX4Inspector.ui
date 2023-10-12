@@ -655,6 +655,19 @@
        <bool>true</bool>
       </property>
      </widget>
+     <widget class="QTextEdit" name="mavlink_sendpacket_textEdit">
+      <property name="geometry">
+       <rect>
+        <x>240</x>
+        <y>340</y>
+        <width>381</width>
+        <height>71</height>
+       </rect>
+      </property>
+      <property name="readOnly">
+       <bool>true</bool>
+      </property>
+     </widget>
     </widget>
    </widget>
   </widget>

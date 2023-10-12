@@ -5,28 +5,29 @@ from datetime import datetime
 def mavlinkInspectBranch(mav_connection, item_number):
     result_msg = None
     if item_number == 'T46':
-        result, result_msg = hwInspect(mav_connection)
+        result, result_msg, send_msg = hwInspect(mav_connection)
     elif item_number == 'T06':
-        result, result_msg = mavcryptInspect(mav_connection)
+        result, result_msg, send_msg = mavcryptInspect(mav_connection)
     elif item_number == 'T22':
-        result, result_msg = msgintegrityInspect(mav_connection)
+        result, result_msg, send_msg = msgintegrityInspect(mav_connection)
     elif item_number == 'T40':
-        result, result_msg = odidInspect(mav_connection)
+        result, result_msg, send_msg = odidInspect(mav_connection)
     elif item_number == 'T53':
-        result, result_msg = sessionInspect(mav_connection)
+        result, result_msg, send_msg = sessionInspect(mav_connection)
     elif item_number == 'T54':
-        result, result_msg = timesyncInsepct(mav_connection)
+        result, result_msg, send_msg = timesyncInsepct(mav_connection)
     elif item_number == 'T60':
-        result, result_msg = flightmodeInspect(mav_connection)
+        result, result_msg, send_msg = flightmodeInspect(mav_connection)
     elif item_number == 'T62':
-        result, result_msg = inappropriateorderInspect(mav_connection)
+        result, result_msg, send_msg = inappropriateorderInspect(mav_connection)
     elif item_number == 'T67':
-        result, result_msg = dosInspect(mav_connection)
+        result, result_msg, send_msg = dosInspect(mav_connection)
     else:
         print('구현중..')
         result = 0
         result_msg = '구현중..'
-    return result, result_msg
+        send_msg = '구현중..'
+    return result, result_msg, send_msg
 
 def msgParsor(msg):
     msg_to_dict = msg.to_dict()
@@ -42,6 +43,7 @@ def msgParsor(msg):
 
 
 def hwInspect(mav_connection):
+    send_msg_str = "{mavpackettype : COMMAND_LONG, command : MAV_CMD_COMPONENT_ARM_DISARM(400), confirmation : 0, param1 : 1, param2 : 0, param3 : 0, param4 : 0, param5 : 0, param6 : 0, param7 : 0}"
     mav_connection.mav.command_long_send(mav_connection.target_system, mav_connection.target_component,
                                          mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0, 1, 0, 0, 0, 0, 0, 0)
     result_msg = mav_connection.recv_match(type='COMMAND_ACK', blocking=True)
@@ -56,18 +58,19 @@ def hwInspect(mav_connection):
     else :
         result = 0
         result_msg_str = '[Error] Cannot capture the packet'
-    return result, result_msg_str
+    return result, result_msg_str, send_msg_str
 
 def msgintegrityInspect(mav_connection):
     # mav_connection.disable_signing()
-    temp_secret_key = chr(42) * 32
-    temp_link_id = 0
-    temp_timestamp = 0
-    mav_connection.setup_signing(temp_secret_key)
+    # temp_secret_key = chr(42) * 32
+    # temp_link_id = 0
+    # temp_timestamp = 0
+    # mav_connection.setup_signing(temp_secret_key)
 
-    return 1, '1'
+    return 1, '1', '1'
 
 def timesyncInsepct(mav_connection):
+    send_msg_str = "{mavpackettype : TIMESYNC, tc1 : 0, ts1 : 1000}"
     mav_connection.mav.timesync_send(0, 1000)
     result_msg = mav_connection.recv_match(type='TIMESYNC', blocking=True)
     print(result_msg)
@@ -77,9 +80,10 @@ def timesyncInsepct(mav_connection):
     else:
         result = 0
         result_msg_str = '[Error] Cannot capture the packet'
-    return result, result_msg_str
+    return result, result_msg_str, send_msg_str
 
 def mavcryptInspect(mav_connection):
+    send_msg_str = 'None'
     result_msg = mav_connection.recv_match(type='HEARTBEAT', blocking=True)
     print(result_msg.to_dict())
     if result_msg:
@@ -88,10 +92,11 @@ def mavcryptInspect(mav_connection):
     else:
         result = 0
         result_msg_str = '[Error] Cannot capture the packet'
-    return result, result_msg_str
+    return result, result_msg_str, send_msg_str
 
 def flightmodeInspect(mav_connection):
     # https://discuss.px4.io/t/mav-cmd-do-set-mode-all-possible-modes/8495/2
+    send_msg_str = "{mavpackettype : COMMAND_LONG, command : MAV_CMD_DO_SET_MODE(176), confirmation : 0, param1 : 0, param2 : 0, param3 : 0, param4 : 0, param5 : 0, param6 : 0, param7 : 0}"
     mav_connection.mav.command_long_send(mav_connection.target_system, mav_connection.target_component,
                                          mavutil.mavlink.MAV_CMD_DO_SET_MODE, 0, 0, 0, 0, 0, 0, 0, 0)
     result_msg = mav_connection.recv_match(type='COMMAND_ACK', blocking=True)
@@ -106,9 +111,10 @@ def flightmodeInspect(mav_connection):
     else :
         result = 0
         result_msg_str = '[Error] Cannot capture the packet'
-    return result, result_msg_str
+    return result, result_msg_str, send_msg_str
 
 def inappropriateorderInspect(mav_connection):
+    send_msg_str = "{mavpackettype : COMMAND_INT, frame : MAV_FRAME_GLOBAL(0), command : MAV_CMD_NAV_LAND(21), current : 0, autocontinue : 0, param1 : 0, param2 : 0, param3 : 0, param4 : 0, x : 0, y : 0, z : 0}"
     mav_connection.mav.command_int_send(mav_connection.target_system, mav_connection.target_component, 0,
                                          mavutil.mavlink.MAV_CMD_NAV_LAND, 0, 0, 0, 0, 0, 0, 0, 0, 0)
     result_msg = mav_connection.recv_match(type='COMMAND_ACK', blocking=True)
@@ -123,9 +129,10 @@ def inappropriateorderInspect(mav_connection):
     else:
         result = 1
         result_msg_str = msgParsor(result_msg)
-    return result, result_msg_str
+    return result, result_msg_str, send_msg_str
 
 def dosInspect(mav_connection):
+    send_msg_str = "{mavpackettype : TIMESYNC, tc1 : 0, ts1 : 1000}"
     for i in range(1000):
         mav_connection.mav.timesync_send(0, 1000)
         result_msg = mav_connection.recv_match(type='TIMESYNC', blocking=True)
@@ -136,9 +143,10 @@ def dosInspect(mav_connection):
     else: # 만약 드론에서 정상적인 응답이 오지 않는다면 DoS 대응을 못한다고 판단할 수 있음
         result = 0
         result_msg_str = '[Error] Cannot capture the packet'
-    return result, result_msg_str
+    return result, result_msg_str, send_msg_str
 
 def odidInspect(mav_connection):
+    send_msg_str = "None"
     for i in range(10):
         result_msg = mav_connection.recv_match(type='HEARTBEAT', blocking=True)
         print(result_msg.to_dict())
@@ -154,9 +162,10 @@ def odidInspect(mav_connection):
             result = 0
             result_msg_str = '[Error] Cannot capture the packet'
             break
-    return result, result_msg_str
+    return result, result_msg_str, send_msg_str
 
 def sessionInspect(mav_connection):
+    send_msg_str = "None"
     result_msg_total = ''
     count = 0
     for i in range(10):
@@ -177,7 +186,7 @@ def sessionInspect(mav_connection):
         result = 1
     else:
         result = 0
-    return result, result_msg_total
+    return result, result_msg_total, send_msg_str
 
 
 def mavlinkInspectSuccessResultMessage(item_number):
