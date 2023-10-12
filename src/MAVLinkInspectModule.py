@@ -1,5 +1,6 @@
 from pymavlink import mavutil
 from pymavlink.generator import mavcrc
+from datetime import datetime
 
 def mavlinkInspectBranch(mav_connection, item_number):
     result_msg = None
@@ -9,12 +10,18 @@ def mavlinkInspectBranch(mav_connection, item_number):
         result, result_msg = mavcryptInspect(mav_connection)
     elif item_number == 'T22':
         result, result_msg = msgintegrityInspect(mav_connection)
+    elif item_number == 'T40':
+        result, result_msg = odidInspect(mav_connection)
+    elif item_number == 'T53':
+        result, result_msg = sessionInspect(mav_connection)
     elif item_number == 'T54':
         result, result_msg = timesyncInsepct(mav_connection)
     elif item_number == 'T60':
         result, result_msg = flightmodeInspect(mav_connection)
     elif item_number == 'T62':
         result, result_msg = inappropriateorderInspect(mav_connection)
+    elif item_number == 'T67':
+        result, result_msg = dosInspect(mav_connection)
     else:
         print('구현중..')
         result = 0
@@ -61,10 +68,10 @@ def msgintegrityInspect(mav_connection):
     return 1, '1'
 
 def timesyncInsepct(mav_connection):
-    mav_connection.mav.timesync_send(0, 0)
+    mav_connection.mav.timesync_send(0, 1000)
     result_msg = mav_connection.recv_match(type='TIMESYNC', blocking=True)
     print(result_msg)
-    if result_msg and result_msg.ts1:
+    if result_msg:
         result = 1
         result_msg_str = msgParsor(result_msg)
     else:
@@ -118,17 +125,99 @@ def inappropriateorderInspect(mav_connection):
         result_msg_str = msgParsor(result_msg)
     return result, result_msg_str
 
+def dosInspect(mav_connection):
+    for i in range(1000):
+        mav_connection.mav.timesync_send(0, 1000)
+        result_msg = mav_connection.recv_match(type='TIMESYNC', blocking=True)
+        print(result_msg)
+    if result_msg:
+        result = 1
+        result_msg_str = msgParsor(result_msg)
+    else: # 만약 드론에서 정상적인 응답이 오지 않는다면 DoS 대응을 못한다고 판단할 수 있음
+        result = 0
+        result_msg_str = '[Error] Cannot capture the packet'
+    return result, result_msg_str
+
+def odidInspect(mav_connection):
+    for i in range(10):
+        result_msg = mav_connection.recv_match(type='HEARTBEAT', blocking=True)
+        print(result_msg.to_dict())
+        if result_msg:
+            if result_msg.type == 34:
+                result = 1
+                result_msg_str = msgParsor(result_msg)
+                break
+            else:
+                result = 0
+                result_msg_str = msgParsor(result_msg)
+        else:
+            result = 0
+            result_msg_str = '[Error] Cannot capture the packet'
+            break
+    return result, result_msg_str
+
+def sessionInspect(mav_connection):
+    result_msg_total = ''
+    count = 0
+    for i in range(10):
+        result_msg = mav_connection.recv_match(type='HEARTBEAT', blocking=True)
+        print(result_msg.to_dict())
+        if result_msg:
+            result_msg_str = msgParsor(result_msg)
+            count += 1
+        else:
+            result_msg_str = '[Error] Cannot capture the packet'
+        result_msg_total += '[Receive Packet Time : ' + str(datetime.now().time()) + '] '
+        result_msg_total += '\n'
+        result_msg_total += result_msg_str
+        result_msg_total += '\n'
+        result_msg_total += '--------------------------------'
+        result_msg_total += '\n'
+    if count > 5: # 일정 수 이상의 Heartbeat 메시지를 정상 수신하였다면 Connection이 이루어졌다고 판단 가능
+        result = 1
+    else:
+        result = 0
+    return result, result_msg_total
+
+
 def mavlinkInspectSuccessResultMessage(item_number):
     if item_number == 'T46':
         result = 'T46 성공'
     elif item_number == 'T06':
         result = 'T06 성공'
+    elif item_number == 'T40':
+        result = '수신된 다수의 Heartbeat 메시지 내의 type field가 MAV_TYPE_ODID(34)와 일치하여 Open Drone ID에 기반한 드론 식별이 이루어지는 것이 확인되었습니다.'
+    elif item_number == 'T53':
+        result = '드론으로부터 주기적으로 전송된 Heartbeat 메시지를 일정 주기마다 정상적으로 수신하여 드론과의 Connection이 이루어지는 것이 확인되었습니다.'
     elif item_number == 'T54':
         result = 'Time Sync 메시지가 정상적으로 송수신되어, 드론과의 시간 동기화가 이루어지는 것이 확인되었습니다.'
     elif item_number == 'T60':
         result = 'Preflight 모드로 비행 모드가 정상적으로 변경되어, 비행 모드 설정 및 변경 기능이 제공되는 것이 확인되었습니다.'
     elif item_number == 'T62':
-        result = '제어 명령 오류 확인이 제대로 이루어지고 있습니다.'
+        result = '비정상적인 비행 지점으로의 비행 명령을 전송하였으나, 드론에서 이를 거부하였습니다. 제어 명령 오류 확인이 제대로 이루어지고 있습니다.'
+    elif item_number == 'T67':
+        result = 'DoS 공격을 수행하였으나, 드론에서 오류 발생 없이 정상적인 ACK 메시지가 수신되었습니다. 서비스 거부 대응이 이루어지는 것이 확인되었습니다.'
+    else:
+        result = '구현중'
+    return result
+
+def mavlinkInspectFailedResultMessage(item_number):
+    if item_number == 'T46':
+        result = 'T46 실패'
+    elif item_number == 'T06':
+        result = 'T06 실패'
+    elif item_number == 'T40':
+        result = '수신된 다수의 Heartbeat 메시지 내의 type field에서 MAV_TYPE_ODID(34)와 일치하는 경우가 존재하지 않습니다. Open Drone ID에 기반한 드론 식별이 이루어지지 않습니다.'
+    elif item_number == 'T53':
+        result = '드론으로부터 주기적으로 전송된 Heartbeat 메시지를 정상적으로 수신하지 못하였습니다. 드론과의 Connection이 정상적으로 이루어지지 않았거나, 연결 상태가 좋지 않습니다.'
+    elif item_number == 'T54':
+        result = 'Time Sync 메시지가 정상적으로 송수신되지 않았습니다. 시간 동기화 기능이 이루어지지 않습니다.'
+    elif item_number == 'T60':
+        result = '비행 모드 변경을 시도하였으나, 드론으로부터 NAK 메시지를 수신하였습니다. 비행 모드 설정 및 변경 기능이 제공되지 않습니다.'
+    elif item_number == 'T62':
+        result = '비정상적인 비행 지점으로의 비행 명령을 전송하였으나, 드론에서 이를 필터링하지 못하고 명령을 승인하였습니다. 제어 명령 오류 확인이 제대로 이루어지지 않았습니다.'
+    elif item_number == 'T67':
+        result = 'TIMESYNC 메시지에 대한 DoS 공격 수행으로 인해, 드론으로 부터 정상적인 TIMESYNC 메시지 수신이 이루어지지 않았습니다. 서비스 거부 대응이 이루어지지 않습니다.'
     else:
         result = '구현중'
     return result

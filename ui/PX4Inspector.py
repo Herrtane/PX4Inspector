@@ -115,11 +115,7 @@ class WindowClass(QMainWindow, form_class) :
         selected_mavlink_item_name = self.mavlink_listWidget.currentItem().text()
         self.mavlink_selected_textEdit.setText(selected_mavlink_item_name)
 
-    # TODO :
     def mavlinkStartClicked(self):
-        # print("Heartbeat from system (system %u component %u)" % (self.mavPort.mav.target_system, self.mavPort.mav.target_component))
-        # self.mavPort.mav.send()
-
         selected_item_number = selected_mavlink_item_name.split('.')[0]
         # MavlinkInspectModule 함수로 분기
         mavlink_result, mavlink_result_msg = mavlinkInspectBranch(self.mavPort.mav, selected_item_number)
@@ -135,7 +131,7 @@ class WindowClass(QMainWindow, form_class) :
             temp_item = QTableWidgetItem()
             temp_item.setText("X")
             self.mavlink_result_tableWidget.setItem(item.row(), 1, temp_item)
-            self.mavlink_result_textEdit.setText('이 드론은 선택한 항목의 보안 요구사항을 충족시키지 않습니다.')
+            self.mavlink_result_textEdit.setText(mavlinkInspectFailedResultMessage(selected_item_number))
         else:
             temp_item = QTableWidgetItem()
             temp_item.setText("보류")
