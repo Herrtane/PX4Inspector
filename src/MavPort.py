@@ -128,26 +128,12 @@ class MavlinkPort:
     def ftp_recv(self):
         # read some bytes into self.buf
         m = self.mav.recv_match(type='FILE_TRANSFER_PROTOCOL', blocking=True,
-                                timeout=0.3)
+                                timeout=0.03)
 
-        # data = m.payload
-        # ret = {
-        #     'seq_number': data[0] + data[1] * 256,
-        #     'session': data[2],
-        #     'opcode': data[3],
-        #     'size': data[4],
-        #     'burst_complete': data[6],
-        #     'req_opcode': data[5],
-        #     'offset': data[8] + data[9] * 256 + data[10] * (256 * 256) + data[11] * (256 * 256 * 256),
-        #     'data': data[12:12 + data[4]]
-        # }
-
-        return m
-
-        # if m is not None:
-        #     if self._debug > 2:
-        #         print(m.payload)
-        #     self.ftp_buf.append(m.payload)
+        if m is not None:
+            if self._debug > 2:
+                print(m.payload)
+            self.ftp_buf.append(m.payload)
 
     def ftp_read(self, n):
         # read some bytes

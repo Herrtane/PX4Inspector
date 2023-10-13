@@ -259,7 +259,7 @@ class WindowClass(QMainWindow, form_class) :
         QApplication.processEvents()
         self.dataRefreshButton.setEnabled(True)
         QMessageBox.about(self, '추출 완료',
-                          '데이터를 갱신하기 위해 프로그램을 종료한 후, 다시 실행해주십시오.')
+                          '데이터를 갱신하기 위해 프로그램을 종료한 후, PX4 드론과 PC의 USB 해제 후 재연결한 뒤, 프로그램을 다시 실행해주십시오.')
 
 def PX4Inspector():
     suppress_qt_warnings()

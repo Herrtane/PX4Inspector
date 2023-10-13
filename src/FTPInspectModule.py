@@ -78,7 +78,7 @@ def ftpInspectHoldResultMessage(item_number):
     return result
 
 def fileintegrityInspect(mav_port, ftp):
-    filename = "/fs/microsd/kkkb"
+    filename = "/fs/microsd/kkkc"
 
     f = open("." + filename, 'rb')
     file_data = f.read()
