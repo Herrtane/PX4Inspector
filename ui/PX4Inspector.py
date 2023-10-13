@@ -101,7 +101,7 @@ class WindowClass(QMainWindow, form_class) :
             temp_item = QTableWidgetItem()
             temp_item.setText("X")
             self.ftp_result_tableWidget.setItem(item.row(), 1, temp_item)
-            self.ftp_result_textEdit.setText('이 드론은 선택한 항목의 보안 요구사항을 충족시키지 않습니다.')
+            self.ftp_result_textEdit.setText(ftpInspectFailedResultMessage(selected_item_number))
         else :
             temp_item = QTableWidgetItem()
             temp_item.setText("보류")

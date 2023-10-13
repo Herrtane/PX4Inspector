@@ -47,6 +47,23 @@ def ftpInspectSuccessResultMessage(item_number):
         result = '구현중'
     return result
 
+def ftpInspectFailedResultMessage(item_number):
+    if item_number == 'T10':
+        result = '임의의 파일에 접근이 가능하여, 파일 및 디렉터리에 대한 접근 통제가 이루어지지 않습니다.'
+    elif item_number == 'T11':
+        result = '중요 데이터에 대한 백업 파일을 찾을 수 없습니다. 해당 항목의 요구사항을 만족하지 않습니다.'
+    elif item_number == 'T12':
+        result = '파일 및 디렉터리에 대한 불필요한 정보 노출이 확인되었습니다.'
+    elif item_number == 'T31':
+        result = 'PX4내의 /fs/microsd 내부의 임의의 파일을 수정하여 드론에 업로드 하였으나, 해당 파일에 대한 무결성 검증이 이루어지지 않아 비정상적인 파일 수정이 드론에 반영되었습니다. 따라서, 파일에 대한 무결성 검증이 이루어지지 않습니다.'
+    elif item_number == 'T38':
+        result = './fs/microsd/log' + ' 위치에서 로그 파일 및 디렉터리를 찾을 수 없습니다. 해당 항목의 요구사항을 만족하지 않습니다.'
+    elif item_number == 'T43':
+        result = './fs/microsd/dataman 파일에서 geofence 정보를 찾을 수 없으므로, 특정 지역 접근 방지 기능을 확인할 수 없습니다.'
+    else:
+        result = '구현중'
+    return result
+
 def ftpInspectHoldResultMessage(item_number):
     if item_number == 'T07':
         result = 'PX4Inspector 작업 폴더 내 ./bin, ./dev, ./etc, ./fs, ./obj, ./proc 디렉토리 추출이 완료되었습니다. 해당 디렉토리 내 파일에 대한 주요 데이터 암호화 여부에 대한 점검자의 추가 분석이 필요합니다.'

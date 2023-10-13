@@ -191,7 +191,7 @@ def sessionInspect(mav_connection):
 
 def mavlinkInspectSuccessResultMessage(item_number):
     if item_number == 'T46':
-        result = 'T46 성공'
+        result = 'ARMING 명령이 Accepted 되었습니다. 따라서, 해당 항목의 요구사항을 만족합니다.'
     elif item_number == 'T06':
         result = 'T06 성공'
     elif item_number == 'T40':
@@ -212,9 +212,9 @@ def mavlinkInspectSuccessResultMessage(item_number):
 
 def mavlinkInspectFailedResultMessage(item_number):
     if item_number == 'T46':
-        result = 'T46 실패'
+        result = 'ARMING 명령이 받아들여지지 않아, 해당 요구 사항을 만족하지 않습니다.'
     elif item_number == 'T06':
-        result = 'T06 실패'
+        result = 'Heartbeat 메시지를 정상적으로 수신되지 않았습니다. 드론 및 PX4-Inspector의 설정을 검토한 후 다시 시도해주십시오.'
     elif item_number == 'T40':
         result = '수신된 다수의 Heartbeat 메시지 내의 type field에서 MAV_TYPE_ODID(34)와 일치하는 경우가 존재하지 않습니다. Open Drone ID에 기반한 드론 식별이 이루어지지 않습니다.'
     elif item_number == 'T53':

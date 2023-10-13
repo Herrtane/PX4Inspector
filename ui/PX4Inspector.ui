@@ -83,7 +83,7 @@
     </property>
     <widget class="QWidget" name="FTPTab">
      <attribute name="title">
-      <string>FTP점검</string>
+      <string>파일기반점검</string>
      </attribute>
      <widget class="QTableWidget" name="ftp_result_tableWidget">
       <property name="geometry">
@@ -331,7 +331,7 @@
     </widget>
     <widget class="QWidget" name="MAVTab">
      <attribute name="title">
-      <string>MAVLink점검</string>
+      <string>통신기반점검</string>
      </attribute>
      <widget class="QListWidget" name="mavlink_listWidget">
       <property name="geometry">
