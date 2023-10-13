@@ -233,7 +233,7 @@ def geofenceInspect():
     ###########################################################
     # Windows의 경우 아래의 주석을 해제
     # parser_fd = os.open("./fs/microsd/dataman", os.O_BINARY)
-    
+
     # Windows의 경우 아래의 코드 한줄을 주석처리
     parser_fd = os.open("./fs/microsd/dataman", os.O_RDONLY)
     ###########################################################
