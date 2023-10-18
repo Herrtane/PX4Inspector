@@ -139,7 +139,7 @@ class WindowClass(QMainWindow, form_class) :
         self.mavlink_sendpacket_textEdit.setText(mavlink_send_msg)
 
     def initUI(self):
-        self.setWindowTitle('PX4Inspector')
+        self.setWindowTitle('PX4-Inspector')
         self.setWindowIcon(QIcon('drone.png'))
         self.setGeometry(300,300,300,200)
         self.show()
