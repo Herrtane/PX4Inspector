@@ -59,7 +59,7 @@ def hwInspect(mav_connection):
         result_msg_str = msgParsor(result_msg)
     else :
         result = 0
-        result_msg_str = '[Error] Cannot capture the packet'
+        result_msg_str = '[Error] Cannot receive packets'
     return result, result_msg_str, send_msg_str
 
 def msgintegrityInspect(mav_connection):
@@ -88,7 +88,7 @@ def timesyncInsepct(mav_connection):
         result_msg_str = msgParsor(result_msg)
     else:
         result = 0
-        result_msg_str = '[Error] Cannot capture the packet'
+        result_msg_str = '[Error] Cannot receive packets'
     return result, result_msg_str, send_msg_str
 
 def mavcryptInspect(mav_connection):
@@ -100,7 +100,7 @@ def mavcryptInspect(mav_connection):
         result_msg_str = msgParsor(result_msg)
     else:
         result = 2
-        result_msg_str = '[Error] Cannot capture the packet'
+        result_msg_str = '[Error] Cannot receive packets'
     return result, result_msg_str, send_msg_str
 
 def flightmodeInspect(mav_connection):
@@ -119,7 +119,7 @@ def flightmodeInspect(mav_connection):
         result_msg_str = msgParsor(result_msg)
     else :
         result = 0
-        result_msg_str = '[Error] Cannot capture the packet'
+        result_msg_str = '[Error] Cannot receive packets'
     return result, result_msg_str, send_msg_str
 
 def inappropriateorderInspect(mav_connection):
@@ -151,7 +151,7 @@ def dosInspect(mav_connection):
         result_msg_str = msgParsor(result_msg)
     else: # 만약 드론에서 정상적인 응답이 오지 않는다면 DoS 대응을 못한다고 판단할 수 있음
         result = 0
-        result_msg_str = '[Error] Cannot capture the packet'
+        result_msg_str = '[Error] Cannot receive packets'
     return result, result_msg_str, send_msg_str
 
 def odidInspect(mav_connection):
@@ -169,7 +169,7 @@ def odidInspect(mav_connection):
                 result_msg_str = msgParsor(result_msg)
         else:
             result = 0
-            result_msg_str = '[Error] Cannot capture the packet'
+            result_msg_str = '[Error] Cannot receive packets'
             break
     return result, result_msg_str, send_msg_str
 
@@ -184,7 +184,7 @@ def sessionInspect(mav_connection):
             result_msg_str = msgParsor(result_msg)
             count += 1
         else:
-            result_msg_str = '[Error] Cannot capture the packet'
+            result_msg_str = '[Error] Cannot receive packets'
         result_msg_total += '[Receive Packet Time : ' + str(datetime.now().time()) + '] '
         result_msg_total += '\n'
         result_msg_total += result_msg_str
@@ -198,18 +198,18 @@ def sessionInspect(mav_connection):
     return result, result_msg_total, send_msg_str
 
 def geofenceInspect(mav_connection):
-    mav_connection.mav.mission_request_list_send(mav_connection.target_system, mav_connection.target_component, 1)
-    result_msg = mav_connection.recv_match(type='MISSION_COUNT', blocking=True)
-    print(result_msg)
-
-    send_msg_str = "{mavpackettype : MISSION_ITEM, frame : MAV_FRAME_GLOBAL(0), command : MAV_CMD_NAV_FENCE_CIRCLE_EXCLUSION(5004), current : 0, autocontinue : 0, param1 : 5, param2 : 0, param3 : 0, param4 : 0, x : 127, y : 37, z : 0, mission_type : 0}"
-    mav_connection.mav.mission_count_send(mav_connection.target_system, mav_connection.target_component, 1, 1)
+    send_msg_str = "{mavpackettype : MISSION_ITEM, frame : MAV_FRAME_GLOBAL(0), command : MAV_CMD_NAV_FENCE_CIRCLE_INCLUSION(5003), current : 1, autocontinue : 0, param1 : 110, param2 : 0, param3 : 0, param4 : 0, x : 37, y : 127, z : 0, mission_type : 1}"
+    mav_connection.mav.mission_count_send(1, 1, 0, 0)
+    mav_connection.mav.mission_count_send(1, 1, 1, 1)
     result_msg = mav_connection.recv_match(type='MISSION_REQUEST', blocking=True)
     print(result_msg)
-    mav_connection.mav.mission_item_int_send(mav_connection.target_system, mav_connection.target_component, 0, 0, 5004,
-                                             0, 0, 100, 0, 0, 0, 60, 60, 1)
+    mav_connection.mav.mission_item_int_send(1, 1, 0, 0, 5003,
+                                             1, 0, 1136753143, 0, 0, 0, 372394750, 1270807222, 1)
     # mav_connection.mav.mission_item_int_send(mav_connection.target_system, mav_connection.target_component, 0, 0, 5000,
     #                                          0, 0, 0, 0, 0, 0, 127, 37, 1, 1)
+    result_msg = mav_connection.recv_match(type='MISSION_ACK', blocking=True)
+    print(result_msg)
+    mav_connection.mav.mission_count_send(1, 1, 0, 2)
     result_msg = mav_connection.recv_match(type='MISSION_ACK', blocking=True)
     print(result_msg)
 
@@ -232,6 +232,8 @@ def mavlinkInspectSuccessResultMessage(item_number):
         result = 'T06 성공'
     elif item_number == 'T40':
         result = '수신된 다수의 Heartbeat 메시지 내의 type field가 MAV_TYPE_ODID(34)와 일치하여 Open Drone ID에 기반한 드론 식별이 이루어지는 것이 확인되었습니다.'
+    elif item_number == 'T43':
+        result = '드론으로 geofence 설정 변경 패킷을 전송하고, /fs/microsd/dataman 파일에 정상 반영함을 확인하였으나, 점검자의 추가 분석이 필요합니다.'
     elif item_number == 'T53':
         result = '드론으로부터 주기적으로 HEARTBEAT 메시지가 전송되고 있습니다만, 점검자의 추가 분석이 필요합니다.'
     elif item_number == 'T54':
@@ -255,6 +257,8 @@ def mavlinkInspectFailedResultMessage(item_number):
         result = '드론으로부터 수신된 HEARTBEAT 메시지에 signature field가 설정되어 있지 않습니다. 통신 메시지 무결성 검증 기능이 이루어지지 않는 것으로 판단되나, 점검자의 추가 분석이 필요합니다.'
     elif item_number == 'T40':
         result = '드론으로부터 수신된 HEARTBEAT 메시지 내의 MAV_TYPE_ODID(34) 필드가 존재하지 않습니다만, 점검자의 추가 분석이 필요합니다.'
+    elif item_number == 'T43':
+        result = '드론으로 geofence 설정 변경 패킷을 전송하였으나, /fs/microsd/dataman 파일에 반영되지 않아, 해당 항목의 요구사항을 만족하지 않는 것으로 판단됩니다.'
     elif item_number == 'T53':
         result = '드론으로부터 주기적으로 전송된 Heartbeat 메시지를 정상적으로 수신하지 못하였습니다. 드론과의 Connection이 정상적으로 이루어지지 않았거나, 연결 상태가 좋지 않습니다.'
     elif item_number == 'T54':
@@ -277,7 +281,7 @@ def mavlinkInspectHoldResultMessage(item_number):
     elif item_number == 'T43':
         result = '특정 지역으로의 접근을 방지하는 Geofence 설정 메시지를 전송하였으나, 설정이 제대로 이루어지지 않아 명령이 거부된 상태입니다. (Geofence 설정 기능 지원은 되는 상태입니다.) 드론 설정을 마친 후에 재시도하십시오.'
     elif item_number == 'T60':
-        result = '비행 모드 변경 명령이 Accepted 되었으나, GPS 설정 등이 제대로 이루어지지 않았거나 해당 비행 모드가 적절하지 않아서 일시적으로 명령이 보류된 상태입니다. 설정을 검토한 후에 재시도하십시오.'
+        result = '비행 모드 변경 명령이 Accepted 되었으나, GPS 설정 등이 제대로 이루어지지 않았거나 해당 비행 모드가 적절하지 않아 일시적으로 명령이 보류된 상태입니다. 설정을 검토한 후에 재시도하십시오.'
     elif item_number == 'T62':
         result = '드론에 LANDING 명령을 전송하였으나, GPS 설정 등이 제대로 이루어지지 않아 일시적으로 명령이 보류된 상태입니다.'
     else:

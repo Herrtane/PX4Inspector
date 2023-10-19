@@ -79,7 +79,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>1</number>
+     <number>0</number>
     </property>
     <widget class="QWidget" name="FTPTab">
      <attribute name="title">
@@ -140,11 +140,6 @@
       <row>
        <property name="text">
         <string>6</string>
-       </property>
-      </row>
-      <row>
-       <property name="text">
-        <string>7</string>
        </property>
       </row>
       <column>
@@ -212,11 +207,6 @@
         <string>T38</string>
        </property>
       </item>
-      <item row="6" column="0">
-       <property name="text">
-        <string>T43</string>
-       </property>
-      </item>
      </widget>
      <widget class="QListWidget" name="ftp_listWidget">
       <property name="geometry">
@@ -255,11 +245,6 @@
       <item>
        <property name="text">
         <string>T38. 로그 생성 및 감사</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>T43. 특정 지역 접근 방지</string>
        </property>
       </item>
      </widget>

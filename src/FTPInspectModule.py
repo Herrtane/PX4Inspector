@@ -39,27 +39,23 @@ def ftpInspectSuccessResultMessage(item_number):
         result = '파일 및 디렉터리에 대한 불필요한 정보 노출이 없는 것이 확인되었습니다.'
     elif item_number == 'T31':
         result = '드론의 임무 데이터를 포함하고 있는 /fs/microsd/dataman 파일을 다운로드하고 수정하여 업로드 하였으나, 드론에서 수정을 거부하였습니다. 중요 파일에 대한 무결성 검증이 이루어지는 것으로 판단됩니다만, 점검자의 추가 분석이 필요합니다.'
-    elif item_number == 'T43':
-        result = './fs/microsd/dataman 파일에서 geofence 정보가 설정되어 특정 지역 접근 방지 기능이 정상적으로 작동하는 것이 확인되었습니다.'
     else:
         result = '구현중'
     return result
 
 def ftpInspectFailedResultMessage(item_number):
     if item_number == 'T07':
-        result = 'PX4-Inspector 작업 폴더 내 ./bin, ./dev, ./obj, ./proc ./etc, ./fs, 폴더 추출이 완료되었습니다. 해당 폴더 내 주요 데이터 암호화가 이루어지지 않은 것으로 판단됩니다만, 점검자의 추가 분석이 필요합니다.'
+        result = 'PX4-Inspector 작업 폴더 내 ./bin, ./dev, ./obj, ./proc ./etc, ./fs, 드론의 데이터 추출이 완료되었습니다. 해당 폴더 내 주요 데이터 암호화가 이루어지지 않은 것으로 판단됩니다만, 점검자의 추가 분석이 필요합니다.'
     elif item_number == 'T10':
-        result = 'PX4-Inspector 작업 폴더 내 ./bin, ./dev, ./obj, ./proc ./etc, ./fs, 폴더 추출이 완료되었습니다. 임의의 파일에 접근 가능하여, 파일 및 디렉터리에 대한 접근 통제가 이루어지지 않는 것으로 판단됩니다만, 점검자의 추가 분석이 필요합니다.'
+        result = 'PX4-Inspector 작업 폴더 내 ./bin, ./dev, ./obj, ./proc ./etc, ./fs, 드론의 데이터 추출이 완료되었습니다. 임의의 파일에 접근 가능하여, 파일 및 디렉터리에 대한 접근 통제가 이루어지지 않는 것으로 판단됩니다만, 점검자의 추가 분석이 필요합니다.'
     elif item_number == 'T11':
         result = '중요 데이터에 대한 백업 파일을 찾을 수 없습니다. 해당 항목의 요구사항을 만족하지 않습니다.'
     elif item_number == 'T12':
-        result = 'PX4-Inspector 작업 폴더 내 ./bin, ./dev, ./obj, ./proc ./etc, ./fs, 폴더 추출이 완료되었습니다. 해당 폴더내 모든 정보가 노출되어 있는 것으로 판단됩니다만, 점검자의 추가 분석이 필요합니다.'
+        result = 'PX4-Inspector 작업 폴더 내 ./bin, ./dev, ./obj, ./proc ./etc, ./fs, 드론의 데이터 추출이 완료되었습니다. 해당 폴더내 모든 정보가 노출되어 있는 것으로 판단됩니다만, 점검자의 추가 분석이 필요합니다.'
     elif item_number == 'T31':
         result = '드론의 임무 데이터를 포함하고 있는 /fs/microsd/dataman 파일을 다운로드하고 수정하여 업로드 하였으나 정상적으로 동작을 하였습니다. 중요 파일에 대한 무결성 검증이 이루어지지 않는 것으로 판단됩니다만, 점검자의 추가 분석이 필요합니다.'
     elif item_number == 'T38':
         result = './fs/microsd/log' + ' 위치에서 로그 파일 및 디렉터리를 찾을 수 없어, 해당 항목의 요구사항을 만족하지 않는 것으로 판단됩니다.'
-    elif item_number == 'T43':
-        result = './fs/microsd/dataman 파일에서 geofence 정보를 찾을 수 없으므로, 특정 지역 접근 방지 기능을 확인할 수 없습니다.'
     else:
         result = '구현중'
     return result
@@ -68,13 +64,13 @@ def ftpInspectHoldResultMessage(item_number):
     if item_number == 'T07':
         result = '파일을 추출하는 과정에서 오류가 발생하였습니다. 드론으로부터 파일을 다시 추출한 이후 재시도하십시오.'
     elif item_number == 'T11':
-        result = 'PX4-Inspector 작업 폴더 내 ./bin, ./dev, ./obj, ./proc ./etc, ./fs, 폴더 추출이 완료되었습니다. \n./fs/microsd/parameters_backup.bson 파일이 존재하며, 설정 데이터의 백업이 존재합니다만, 점검자의 추가 분석이 필요합니다. (다른 중요 데이터의 백업 유무는 발견되지 않았습니다.)'
+        result = 'PX4-Inspector 작업 폴더 내 ./bin, ./dev, ./obj, ./proc ./etc, ./fs, 드론의 데이터 추출이 완료되었습니다. \n./fs/microsd/parameters_backup.bson 파일이 존재하며, 설정 데이터의 백업이 존재합니다만, 점검자의 추가 분석이 필요합니다. (다른 중요 데이터의 백업 유무는 발견되지 않았습니다.)'
     elif item_number == 'T12':
         result = '파일을 추출하는 과정에서 오류가 발생하였습니다. 드론으로부터 파일을 다시 추출한 이후 재시도하십시오.'
     elif item_number == 'T31':
         result = '항목을 점검하는 과정에서 오류가 발생하였습니다. 드론과의 연결상태, 점검하려는 드론 내의 대상 파일의 상태 등을 확인하고 다시 시도해주십시오.'
     elif item_number == 'T38':
-        result = 'PX4-Inspector 작업 폴더 내 ./bin, ./dev, ./obj, ./proc ./etc, ./fs, 폴더 추출이 완료되었습니다. ./fs/microsd/log 폴더에 로그 정보를 확인하였습니다만, 점검자의 추가 분석이 필요합니다. 추가로, 드론 운용사의 문서를 통해 주기적인 로그 감사 여부를 확인해야 합니다.'
+        result = 'PX4-Inspector 작업 폴더 내 ./bin, ./dev, ./obj, ./proc ./etc, ./fs, 드론의 데이터 추출이 완료되었습니다. ./fs/microsd/log 폴더에 로그 정보를 확인하였습니다만, 점검자의 추가 분석이 필요합니다. 추가로, 드론 운용사의 문서를 통해 주기적인 로그 감사 여부를 확인해야 합니다.'
     else:
         result = '적절하지 않은 항목입니다.'
     return result
