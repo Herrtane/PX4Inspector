@@ -199,16 +199,18 @@ def sessionInspect(mav_connection):
 
 def geofenceInspect(mav_connection):
     send_msg_str = "{mavpackettype : MISSION_ITEM, frame : MAV_FRAME_GLOBAL(0), command : MAV_CMD_NAV_FENCE_CIRCLE_INCLUSION(5003), current : 1, autocontinue : 0, param1 : 110, param2 : 0, param3 : 0, param4 : 0, x : 37, y : 127, z : 0, mission_type : 1}"
+    # for i in range(100):
+    #     result_msg = mav_connection.recv_msg()
+    #     print(result_msg)
     mav_connection.mav.mission_count_send(1, 1, 0, 0)
     mav_connection.mav.mission_count_send(1, 1, 1, 1)
     result_msg = mav_connection.recv_match(type='MISSION_REQUEST', blocking=True)
     print(result_msg)
-    mav_connection.mav.mission_item_int_send(1, 1, 0, 0, 5003,
+    mav_connection.mav.mission_item_int_send(mav_connection.target_system, mav_connection.target_component, 0, 0, 5003,
                                              1, 0, 1136753143, 0, 0, 0, 372394750, 1270807222, 1)
     # mav_connection.mav.mission_item_int_send(mav_connection.target_system, mav_connection.target_component, 0, 0, 5000,
     #                                          0, 0, 0, 0, 0, 0, 127, 37, 1, 1)
     result_msg = mav_connection.recv_match(type='MISSION_ACK', blocking=True)
-    print(result_msg)
     mav_connection.mav.mission_count_send(1, 1, 0, 2)
     result_msg = mav_connection.recv_match(type='MISSION_ACK', blocking=True)
     print(result_msg)
