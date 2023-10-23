@@ -25,8 +25,6 @@ pip install windows-curses
 > /ui/PX4Inspector.py 파일에서 Serial={PX4가 연결된 시리얼 포트명} 으로 설정합니다. 
 > ex) Serial = '/dev/ttyACM0'
 
-> /src/FTPInspectModule.py 파일에서 def geofenceInspect(): 함수 아래의 주석을 수정합니다
-
 ### 분석 도구 실행
 
 ```
