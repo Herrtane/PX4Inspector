@@ -67,7 +67,6 @@ def msgintegrityInspect(mav_connection):
     result_msg = mav_connection.recv_match(type='HEARTBEAT', blocking=True)
     print(result_msg)
     signature_field = mav_connection.mav.signing.secret_key
-    # print(mav_connection.mav.check_signature(msg_buf, mav_connection.target_system, mav_connection.target_component))
     if signature_field:
         result = 1
         result_msg_str = msgParsor(result_msg) + '\n'
@@ -104,7 +103,6 @@ def mavcryptInspect(mav_connection):
     return result, result_msg_str, send_msg_str
 
 def flightmodeInspect(mav_connection):
-    # https://discuss.px4.io/t/mav-cmd-do-set-mode-all-possible-modes/8495/2
     send_msg_str = "{mavpackettype : COMMAND_LONG, command : MAV_CMD_DO_SET_MODE(176), confirmation : 0, param1 : 0, param2 : 0, param3 : 0, param4 : 0, param5 : 0, param6 : 0, param7 : 0}"
     mav_connection.mav.command_long_send(mav_connection.target_system, mav_connection.target_component,
                                          mavutil.mavlink.MAV_CMD_DO_SET_MODE, 0, 0, 0, 0, 0, 0, 0, 0)
@@ -199,17 +197,12 @@ def sessionInspect(mav_connection):
 
 def geofenceInspect(mav_connection):
     send_msg_str = "{mavpackettype : MISSION_ITEM, frame : MAV_FRAME_GLOBAL(0), command : MAV_CMD_NAV_FENCE_CIRCLE_INCLUSION(5003), current : 1, autocontinue : 0, param1 : 1136753143, param2 : 0, param3 : 0, param4 : 0, x : 372394750, y : 1270807222, z : 0, mission_type : 1}"
-    # for i in range(100):
-    #     result_msg = mav_connection.recv_msg()
-    #     print(result_msg)
     mav_connection.mav.mission_count_send(1, 1, 0, 0)
     mav_connection.mav.mission_count_send(1, 1, 1, 1)
     result_msg = mav_connection.recv_match(type='MISSION_REQUEST', blocking=True)
     print(result_msg)
     mav_connection.mav.mission_item_int_send(mav_connection.target_system, mav_connection.target_component, 0, 0, 5003,
                                              1, 0, 1136753143, 0, 0, 0, 372394750, 1270807222, 1, 1)
-    # mav_connection.mav.mission_item_int_send(mav_connection.target_system, mav_connection.target_component, 0, 0, 5000,
-    #                                          0, 0, 0, 0, 0, 0, 127, 37, 1, 1)
     result_msg = mav_connection.recv_match(type='MISSION_ACK', blocking=True)
     mav_connection.mav.mission_count_send(1, 1, 0, 2)
     result_msg = mav_connection.recv_match(type='MISSION_ACK', blocking=True)

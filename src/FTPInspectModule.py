@@ -23,8 +23,6 @@ def ftpInspectBranch(mav_port, ftp, item_number):
         result = fileintegrityInspect(mav_port, ftp)
     elif item_number == 'T38':
         result = logInspect()
-    # elif item_number == 'T43':
-    #     result = geofenceInspect()
     else:
         print('구현중..')
         result = 0
@@ -124,10 +122,6 @@ def fileintegrityInspect(mav_port, ftp):
     recv_msg = ftpRecvParsor(mav_port)
     print(recv_msg)
 
-    # ftpSend(mav_port, opcode=7, size=len(backup_data_2), data=backup_data_2, offset=offset,
-    #         seq_number=5)
-    # recv_msg = ftpRecvParsor(mav_port)
-    # print(recv_msg)
     while True:
         if offset >= len(backup_data_2):
             break
@@ -224,27 +218,6 @@ def ftpRecvParsor(mavPort):
     }
 
     return ret
-
-# def geofenceInspect():
-#
-#     ###########################################################
-#     # Windows의 경우 아래의 주석을 해제
-#     # parser_fd = os.open("./fs/microsd/dataman", os.O_BINARY)
-#
-#     # Windows의 경우 아래의 코드 한줄을 주석처리
-#     parser_fd = os.open("./fs/microsd/dataman", os.O_RDONLY)
-#     ###########################################################
-#
-#     parser = missionParser(parser_fd)
-#     geoPoints = parser.get_fence_points()
-#     print(geoPoints)
-#     geo_count = 0
-#     for i in geoPoints:
-#         geo_count += 1
-#     if geo_count > 0:
-#         return 1
-#     else:
-#         return 0
 
 def cryptInspect():
     # 파일 접근 검사를 통해 파일이 추출되었다면 해당 파일을 점검자가 직접 추가 확인 해서 판단
