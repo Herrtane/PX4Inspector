@@ -210,8 +210,7 @@ def ftpSend(mavPort, opcode=0, data='', size=0, offset=0, session=0, seq_number=
     mavPort.mav.mav.file_transfer_protocol_send(0, mavPort.mav.target_system, mavPort.mav.target_component, payload)
 
 def ftpRecvParsor(mavPort):
-    msg = mavPort.mav.recv_match(type='FILE_TRANSFER_PROTOCOL', blocking=True,
-                            timeout=0.1)
+    msg = mavPort.mav.recv_match(type='FILE_TRANSFER_PROTOCOL', blocking=True)
     data = msg.payload
     ret = {
         'seq_number': data[0] + data[1] * 256,

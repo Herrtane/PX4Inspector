@@ -79,8 +79,8 @@ def msgintegrityInspect(mav_connection):
     return result, result_msg_str, send_msg_str
 
 def timesyncInsepct(mav_connection):
-    send_msg_str = "{mavpackettype : TIMESYNC, tc1 : 0, ts1 : 1000}"
-    mav_connection.mav.timesync_send(0, 1000)
+    send_msg_str = "{mavpackettype : TIMESYNC, tc1 : 0, ts1 : 0}"
+    mav_connection.mav.timesync_send(0, 0)
     result_msg = mav_connection.recv_match(type='TIMESYNC', blocking=True)
     print(result_msg)
     if result_msg:
@@ -142,7 +142,7 @@ def inappropriateorderInspect(mav_connection):
 
 def dosInspect(mav_connection):
     send_msg_str = "{mavpackettype : STATUSTEXT, severity : MAV_SEVERITY_ALERT(1), text : 'dos'}"
-    for i in range(10000):
+    for i in range(30000):
         mav_connection.mav.statustext_send(1, b"dos")
         result_msg = mav_connection.recv_msg()
         print(result_msg)
@@ -198,7 +198,7 @@ def sessionInspect(mav_connection):
     return result, result_msg_total, send_msg_str
 
 def geofenceInspect(mav_connection):
-    send_msg_str = "{mavpackettype : MISSION_ITEM, frame : MAV_FRAME_GLOBAL(0), command : MAV_CMD_NAV_FENCE_CIRCLE_INCLUSION(5003), current : 1, autocontinue : 0, param1 : 110, param2 : 0, param3 : 0, param4 : 0, x : 37, y : 127, z : 0, mission_type : 1}"
+    send_msg_str = "{mavpackettype : MISSION_ITEM, frame : MAV_FRAME_GLOBAL(0), command : MAV_CMD_NAV_FENCE_CIRCLE_INCLUSION(5003), current : 1, autocontinue : 0, param1 : 1136753143, param2 : 0, param3 : 0, param4 : 0, x : 372394750, y : 1270807222, z : 0, mission_type : 1}"
     # for i in range(100):
     #     result_msg = mav_connection.recv_msg()
     #     print(result_msg)
@@ -207,7 +207,7 @@ def geofenceInspect(mav_connection):
     result_msg = mav_connection.recv_match(type='MISSION_REQUEST', blocking=True)
     print(result_msg)
     mav_connection.mav.mission_item_int_send(mav_connection.target_system, mav_connection.target_component, 0, 0, 5003,
-                                             1, 0, 1136753143, 0, 0, 0, 372394750, 1270807222, 1)
+                                             1, 0, 1136753143, 0, 0, 0, 372394750, 1270807222, 1, 1)
     # mav_connection.mav.mission_item_int_send(mav_connection.target_system, mav_connection.target_component, 0, 0, 5000,
     #                                          0, 0, 0, 0, 0, 0, 127, 37, 1, 1)
     result_msg = mav_connection.recv_match(type='MISSION_ACK', blocking=True)
