@@ -14,6 +14,10 @@ cd C:\Users\{username}\Desktop
 pip install -r requirements.txt
 ```
 
+* 실행하기 전
+> /ui/PX4Inspector.py 파일의 Initial Configuration Code 에서 OS에 따라 Windows 용, Mac 용의 주석을 해제하고, 사용하지 않는 OS의 line 2줄을 주석처리합니다.
+> ex) Windows 환경일 경우, Windows 용 부분 주석 해제, Mac 부분 주석처리
+
 * Windows 환경에서 사용 시
 ```
 pip install windows-curses
