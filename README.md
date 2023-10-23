@@ -19,8 +19,6 @@ pip install -r requirements.txt
 pip install windows-curses
 ```
 
-> /src/FTPInspectModule.py 파일에서 def geofenceInspect(): 함수 아래의 주석을 수정합니다
-
 * Linux, MacOS 환경에서 사용 시
 > /ui/PX4Inspector.py 파일에서 Serial={PX4가 연결된 시리얼 포트명} 으로 설정합니다. 
 > ex) Serial = '/dev/ttyACM0'
