@@ -1,11 +1,11 @@
-# PX4 Inspector project
+# PX4-Inspector project
 
 # Getting Started
 ## 1. Download resource
 
 ```commandline
 cd C:\Users\{username}\Desktop
-해당 디렉토리에 PX4Inspector 폴더 전체를 다운로드합니다.
+해당 디렉토리에 PX4-Inspector 폴더 전체를 다운로드합니다.
 ```
 
 ## 2. Install packages and Configuration
@@ -54,3 +54,7 @@ Attribute Error : NoneType object has no attribute
 혹은, 오류 메시지 없이 프로그램이 강제종료 되는 현상이 발생할 수 있습니다.
 
 이 경우, 프로그램을 재실행하셔서 **해당 항목을 먼저 점검**하시면 정상적으로 동작합니다. 만약 에러가 반복될 경우, 반복해서 재시도하십시오.
+
+## Contributor
+
+본 연구는 **경희대학교 컴퓨터공학과 및 융합보안대학원 MESL 연구실**에서 진행하였습니다.
