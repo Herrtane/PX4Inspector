@@ -57,4 +57,5 @@ Attribute Error : NoneType object has no attribute
 
 ## Contributor
 
-본 연구는 **경희대학교 컴퓨터공학과 및 융합보안대학원 MESL 연구실**에서 진행하였습니다.
+Made by. 경희대학교 컴퓨터공학과 이철한
+본 연구는 **경희대학교 컴퓨터공학과 및 융합보안대학원 MESL 연구실**에서 진행하였으며, **2023-2학기 졸업프로젝트**로 진행한 연구입니다.
